@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>背单词单页APP（英文→中文）</title>
+<style>
+body { font-family: Arial, sans-serif; background: #f2f2f2; margin:0; padding:20px; }
+h1 { font-size:28px; text-align:center; margin-bottom:20px; }
+section { display:none; }
+section.active { display:block; }
+input, button { font-size: 18px; padding: 10px; border-radius: 6px; margin: 5px 0; }
+input { width: 80%; max-width: 400px; box-sizing: border-box; }
+button { border: none; background: #4CAF50; color: white; cursor: pointer; }
+#wordList div { margin-bottom:5px; font-size:16px; }
+#prompt { font-size:24px; margin-bottom:15px; text-align:center; }
+#answer { font-size:20px; color:red; text-align:center; margin-top:10px; }
+#stats { font-size:18px; color:#333; text-align:center; margin-top:10px; }
+nav { text-align:center; margin-bottom:20px; }
+nav button { margin: 0 5px; background:#2196F3; }
+</style>
+</head>
+<body>
+
+<h1>背单词单页APP（英文→中文）</h1>
+
+<nav>
+  <button onclick="showSection('manage')">单词管理</button>
+  <button onclick="startStudy()">背单词</button>
+</nav>
+
+<!-- 单词管理区 -->
+<section id="manage" class="active">
+  <input type="text" id="chinese" placeholder="输入中文释义">
+  <input type="text" id="english" placeholder="输入英文单词">
+  <button onclick="addWord()">添加单词</button>
+  
+  <div style="margin-top:10px;">
+    <input type="file" id="wordFile" accept=".docx">
+    <button onclick="importWordDoc()">导入Word文档</button>
+  </div>
+  
+  <div id="wordList"></div>
+</section>
+
+<!-- 背单词区 -->
+<section id="study">
+  <p id="prompt">加载中...</p>
+  <input type="text" id="userInput" placeholder="输入中文释义">
+  <button onclick="checkAnswer()">确认</button>
+  <p id="answer"></p>
+  <p id="stats"></p>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+<script>
+// -------------------- 单词管理 --------------------
+let words = JSON.parse(localStorage.getItem('words') || '[]');
+
+function addWord(){
+  const ch = document.getElementById('chinese').value.trim();
+  const en = document.getElementById('english').value.trim();
+  if(ch && en){
+    words.push({ chinese: ch, english: en });
+    localStorage.setItem('words', JSON.stringify(words));
+    document.getElementById('chinese').value = '';
+    document.getElementById('english').value = '';
+    showWordList();
+  } else {
+    alert("中文和英文都必须填写！");
+  }
+}
+
+function showWordList(){
+  const list = document.getElementById('wordList');
+  list.innerHTML = '';
+  words.forEach((w,i)=>{
+    const div = document.createElement('div');
+    div.innerHTML = `${i+1}. ${w.english} → ${w.chinese} <button onclick="deleteWord(${i})">删除</button>`;
+    list.appendChild(div);
+  });
+}
+
+function deleteWord(index){
+  words.splice(index,1);
+  localStorage.setItem('words', JSON.stringify(words));
+  showWordList();
+}
+
+showWordList();
+
+// -------------------- Word 导入 --------------------
+function importWordDoc(){
+  const fileInput = document.getElementById('wordFile');
+  if(fileInput.files.length===0){ alert("请选择 Word 文件！"); return; }
+  const file = fileInput.files[0];
+
+  const reader = new FileReader();
+  reader.onload = function(event){
+    const arrayBuffer = event.target.result;
+    mammoth.extractRawText({arrayBuffer: arrayBuffer})
+      .then(function(result){
+        const text = result.value;
+        const lines = text.split(/\r?\n/);
+        let successCount = 0;
+        let errorLines = [];
+        lines.forEach((line,index)=>{
+          line = line.trim();
+          if(line){
+            const parts = line.split(/\s+/);
+            if(parts.length>=2){
+              const ch = parts[0];
+              const en = parts.slice(1).join(' ');
+              words.push({chinese:ch,english:en});
+              successCount++;
+            } else {
+              errorLines.push(index+1);
+            }
+          }
+        });
+        localStorage.setItem('words', JSON.stringify(words));
+        showWordList();
+        let msg = `成功导入 ${successCount} 个单词！`;
+        if(errorLines.length>0){
+          msg += `\n以下行格式错误未导入：${errorLines.join(', ')}`;
+        }
+        alert(msg);
+      })
+      .catch(function(err){
+        console.error(err);
+        alert("解析 Word 文件失败！");
+      });
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// -------------------- 背单词 --------------------
+let currentIndex = 0;
+let shuffledIndexes = [];
+let correctCount = 0;
+let totalCount = 0;
+let wrongList = [];
+let wordsForReview = null;
+
+function showSection(id){
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function shuffle(array){ 
+  let arr = array.slice();
+  for(let i=arr.length-1;i>0;i--){
+    let j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function startStudy(){
+  if(words.length===0){ alert("先添加单词！"); return; }
+  showSection('study');
+  shuffledIndexes = shuffle([...Array(words.length).keys()]);
+  currentIndex = 0;
+  correctCount = 0;
+  totalCount = 0;
+  wrongList = [];
+  wordsForReview = null;
+  showPrompt();
+  updateStats();
+}
+
+function showPrompt(list = words){
+  let idx = shuffledIndexes[currentIndex];
+  document.getElementById('prompt').innerText = "请输入中文释义：" + list[idx].english;
+  document.getElementById('userInput').value = "";
+  document.getElementById('answer').innerText = "";
+  document.getElementById('userInput').focus();
+}
+
+function checkAnswer(){
+  let idx = shuffledIndexes[currentIndex];
+  let currentList = wordsForReview || words;
+  let userInput = document.getElementById('userInput').value.trim();
+  let correct = currentList[idx].chinese;
+  totalCount++;
+
+  if(userInput === correct){
+    correctCount++;
+  } else {
+    document.getElementById('answer').innerText = "错误！正确答案是：" + correct;
+    wrongList.push(currentList[idx]);
+  }
+
+  currentIndex++;
+  if(currentIndex >= shuffledIndexes.length){
+    if(wrongList.length>0){
+      if(confirm(`本轮完成，正确率：${((correctCount/totalCount)*100).toFixed(1)}%，进入错题复习？`)){
+        shuffledIndexes = shuffle([...Array(wrongList.length).keys()]);
+        currentIndex=0;
+        wordsForReview = wrongList.slice();
+        wrongList=[];
+        showPrompt(wordsForReview);
+        updateStats();
+        return;
+      }
+    } else {
+      alert(`本轮完成，正确率：${((correctCount/totalCount)*100).toFixed(1)}%，全部答对！`);
+    }
+    startStudy();
+    return;
+  }
+  showPrompt(wordsForReview || words);
+  updateStats();
+}
+
+function updateStats(){
+  document.getElementById('stats').innerText = `已答题：${totalCount}，正确：${correctCount}，正确率：${totalCount===0?0:((correctCount/totalCount)*100).toFixed(1)}%`;
+}
+
+document.getElementById('userInput').addEventListener("keydown", function(e){
+  if(e.key==="Enter"){ checkAnswer(); }
+});
+</script>
+
+</body>
+</html>
