@@ -3,224 +3,278 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>背单词单页APP（英文→中文）</title>
+<title>小背词 - 考研成就版</title>
 <style>
-body { font-family: Arial, sans-serif; background: #f2f2f2; margin:0; padding:20px; }
-h1 { font-size:28px; text-align:center; margin-bottom:20px; }
-section { display:none; }
-section.active { display:block; }
-input, button { font-size: 18px; padding: 10px; border-radius: 6px; margin: 5px 0; }
-input { width: 80%; max-width: 400px; box-sizing: border-box; }
-button { border: none; background: #4CAF50; color: white; cursor: pointer; }
-#wordList div { margin-bottom:5px; font-size:16px; }
-#prompt { font-size:24px; margin-bottom:15px; text-align:center; }
-#answer { font-size:20px; color:red; text-align:center; margin-top:10px; }
-#stats { font-size:18px; color:#333; text-align:center; margin-top:10px; }
-nav { text-align:center; margin-bottom:20px; }
-nav button { margin: 0 5px; background:#2196F3; }
+:root {
+  --primary: #4a90e2; --success: #52c41a; --danger: #ff4d4f; --warning: #faad14;
+  --bg: #f0f2f5; --card: #ffffff; --text: #333; --border: #eeeeee;
+}
+body.dark-mode { --bg: #1a1a1a; --card: #2d2d2d; --text: #e0e0e0; --border: #444; }
+body.green-mode { --bg: #e8f5e9; --card: #ffffff; --text: #2e7d32; }
+
+body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; transition: 0.3s; }
+.container { max-width: 500px; margin: 0 auto; }
+section { display: none; background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-top: 10px; }
+section.active { display: block; animation: fadeIn 0.2s; }
+
+nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 5px; }
+button { border: none; padding: 10px 2px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; }
+.btn-blue { background: var(--primary); color: white; }
+.btn-green { background: var(--success); color: white; }
+.btn-outline { border: 1px solid var(--border); background: var(--card); color: var(--text); }
+
+/* 成就看板样式 */
+.stats-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.stat-card { background: var(--bg); padding: 10px; border-radius: 10px; text-align: center; }
+.stat-val { font-size: 20px; font-weight: bold; color: var(--primary); }
+.progress-container { background: #eee; height: 8px; border-radius: 4px; margin-top: 5px; overflow: hidden; }
+.progress-bar { background: var(--success); height: 100%; transition: 0.5s; }
+
+/* 存储警告样式 */
+.storage-info { font-size: 11px; color: #888; margin-top: 10px; text-align: center; }
+.warning-box { background: #fff1f0; border: 1px solid var(--danger); color: var(--danger); padding: 8px; border-radius: 8px; font-size: 12px; margin-bottom: 10px; display: none; }
+
+input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; background: var(--card); color: var(--text); }
+textarea { height: 80px; }
+
+#matchGrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+.card { background: var(--bg); padding: 5px; text-align: center; border-radius: 8px; font-size: 11px; cursor: pointer; min-height: 55px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
+.card.selected { border-color: var(--primary); color: var(--primary); }
+.card.hidden { opacity: 0; pointer-events: none; }
+.word-item { border-bottom: 1px solid var(--border); padding: 8px 0; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
 </head>
 <body>
 
-<h1>背单词单页APP（英文→中文）</h1>
-
-<nav>
-  <button onclick="showSection('manage')">单词管理</button>
-  <button onclick="startStudy()">背单词</button>
-</nav>
-
-<!-- 单词管理区 -->
-<section id="manage" class="active">
-  <input type="text" id="chinese" placeholder="输入中文释义">
-  <input type="text" id="english" placeholder="输入英文单词">
-  <button onclick="addWord()">添加单词</button>
+<div class="container">
+  <h2 style="text-align:center; margin:10px 0;">✨ 小背词</h2>
   
-  <div style="margin-top:10px;">
-    <input type="file" id="wordFile" accept=".docx">
-    <button onclick="importWordDoc()">导入Word文档</button>
+  <nav>
+    <button class="btn-blue" onclick="showSection('manage')">管理</button>
+    <button class="btn-blue" onclick="startStudy()">背诵</button>
+    <button class="btn-blue" onclick="showReview()">错题</button>
+    <button class="btn-blue" onclick="startMatch()">消除</button>
+  </nav>
+
+  <div class="stats-dashboard">
+    <div class="stat-card">
+      <small>今日已掌握</small>
+      <div id="todayCount" class="stat-val">0</div>
+    </div>
+    <div class="stat-card">
+      <small>掌握率 (Lv.5)</small>
+      <div id="lv5Percent" class="stat-val">0%</div>
+      <div class="progress-container"><div id="lv5Bar" class="progress-bar" style="width: 0%"></div></div>
+    </div>
   </div>
-  
-  <div id="wordList"></div>
-</section>
 
-<!-- 背单词区 -->
-<section id="study">
-  <p id="prompt">加载中...</p>
-  <input type="text" id="userInput" placeholder="输入中文释义">
-  <button onclick="checkAnswer()">确认</button>
-  <p id="answer"></p>
-  <p id="stats"></p>
-</section>
+  <section id="manage" class="active">
+    <div id="storageWarn" class="warning-box">⚠️ 存储空间接近上限，请立即导出备份并清空历史！</div>
+    
+    <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+      <button class="btn-outline" style="flex:1" onclick="setTheme('light')">☀️ 白天</button>
+      <button class="btn-outline" style="flex:1" onclick="setTheme('dark')">🌙 深夜</button>
+      <button class="btn-outline" style="flex:1" onclick="setTheme('green')">🍃 护眼</button>
+    </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+    <input type="text" id="chIn" placeholder="中文">
+    <input type="text" id="enIn" placeholder="英文">
+    <button class="btn-green" style="width:100%" onclick="addWord()">单个添加</button>
+
+    <textarea id="batchIn" style="margin-top:10px;" placeholder="批量导入示例：&#10;logic 逻辑&#10;spirit 精神"></textarea>
+    <button class="btn-blue" style="width:100%" onclick="batchAdd()">批量导入</button>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+      <button class="btn-outline" onclick="exportData()">💾 备份数据</button>
+      <button class="btn-outline" onclick="document.getElementById('fileIn').click()">📂 导入文件</button>
+      <input type="file" id="fileIn" style="display:none" onchange="importData(event)">
+    </div>
+    <div id="storageUsage" class="storage-info">存储占用: 0%</div>
+    <button style="width:100%; margin-top:10px; background:#ffeded; color:#ff4d4f;" onclick="clearAll()">🧨 格式化所有数据</button>
+    <div id="wordList"></div>
+  </section>
+
+  <section id="study">
+    <div id="studyStats" style="text-align:right; font-size:12px; color:#888;"></div>
+    <div id="qPrompt" style="font-size:24px; text-align:center; margin:30px 0; font-weight:bold;"></div>
+    <input type="text" id="uInput" placeholder="输入大概意思...">
+    <button class="btn-green" style="width:100%; padding: 15px;" onclick="handleCheck()">确认</button>
+    <p id="qFeedback" style="text-align:center; min-height:24px; margin-top:15px; font-weight:bold;"></p>
+  </section>
+
+  <section id="review">
+    <h3 style="margin:0">待强化词汇</h3>
+    <div id="wrongList"></div>
+    <button class="btn-blue" style="width:100%; margin-top:15px;" onclick="startStudy(true)">开始突击</button>
+  </section>
+
+  <section id="match">
+    <div id="matchGrid"></div>
+    <button class="btn-blue" style="width:100%; margin-top:15px;" onclick="startMatch()">换一组</button>
+  </section>
+</div>
+
 <script>
-// -------------------- 单词管理 --------------------
 let words = JSON.parse(localStorage.getItem('words') || '[]');
+// 统计今天正确个数：{ "2023-10-27": 15 }
+let history = JSON.parse(localStorage.getItem('study_history') || '{}');
+let currentIdx = 0, studyPool = [];
 
-function addWord(){
-  const ch = document.getElementById('chinese').value.trim();
-  const en = document.getElementById('english').value.trim();
-  if(ch && en){
-    words.push({ chinese: ch, english: en });
-    localStorage.setItem('words', JSON.stringify(words));
-    document.getElementById('chinese').value = '';
-    document.getElementById('english').value = '';
-    showWordList();
-  } else {
-    alert("中文和英文都必须填写！");
-  }
+function showSection(id){
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  updateDashboard();
+  if(id === 'manage') { renderList(); checkStorage(); }
 }
 
-function showWordList(){
-  const list = document.getElementById('wordList');
-  list.innerHTML = '';
-  words.forEach((w,i)=>{
-    const div = document.createElement('div');
-    div.innerHTML = `${i+1}. ${w.english} → ${w.chinese} <button onclick="deleteWord(${i})">删除</button>`;
-    list.appendChild(div);
+function setTheme(m){ document.body.className = m==='light'?'':m+'-mode'; }
+
+function addWord(){
+  const ch = document.getElementById('chIn').value.trim(), en = document.getElementById('enIn').value.trim();
+  if(ch && en){ words.push({ch, en, level: 0}); save(); renderList(); document.getElementById('chIn').value=''; document.getElementById('enIn').value=''; }
+}
+
+function batchAdd(){
+  const lines = document.getElementById('batchIn').value.trim().split('\n');
+  lines.forEach(line => {
+    const parts = line.trim().split(/\s+/);
+    if(parts.length >= 2) words.push({en: parts[0], ch: parts.slice(1).join(' '), level: 0});
+  });
+  save(); renderList(); document.getElementById('batchIn').value = '';
+}
+
+function save(){ 
+    localStorage.setItem('words', JSON.stringify(words));
+    localStorage.setItem('study_history', JSON.stringify(history));
+    updateDashboard();
+}
+
+// 核心功能：成就统计
+function updateDashboard(){
+  const today = new Date().toLocaleDateString();
+  document.getElementById('todayCount').innerText = history[today] || 0;
+  
+  const lv5Count = words.filter(w => w.level >= 5).length;
+  const percent = words.length > 0 ? Math.round((lv5Count / words.length) * 100) : 0;
+  document.getElementById('lv5Percent').innerText = percent + '%';
+  document.getElementById('lv5Bar').style.width = percent + '%';
+}
+
+// 核心功能：存储监控
+function checkStorage(){
+  const str = JSON.stringify(localStorage);
+  const size = (str.length * 2) / 1024 / 1024; // 估算MB
+  const limit = 5; 
+  const usage = Math.round((size / limit) * 100);
+  document.getElementById('storageUsage').innerText = `存储占用: ${usage}% (${size.toFixed(2)}MB / 5MB)`;
+  document.getElementById('storageWarn').style.display = usage > 80 ? 'block' : 'none';
+}
+
+function renderList(){
+  const container = document.getElementById('wordList');
+  container.innerHTML = `<h4 style="margin:20px 0 10px 0">词库总量: ${words.length}</h4>`;
+  words.slice().reverse().forEach((w, i) => {
+    const realIdx = words.length - 1 - i;
+    container.innerHTML += `<div class="word-item">
+      <span>${w.en} <small style="color:#faad14">Lv.${w.level||0}</small></span>
+      <span>${w.ch}</span>
+      <span onclick="words.splice(${realIdx},1);save();renderList()">🗑️</span>
+    </div>`;
   });
 }
 
-function deleteWord(index){
-  words.splice(index,1);
-  localStorage.setItem('words', JSON.stringify(words));
-  showWordList();
+// 背诵逻辑
+function startStudy(onlyLowLevel = false){
+  if(words.length === 0) return alert("词库为空！");
+  studyPool = onlyLowLevel ? words.filter(w => (w.level || 0) === 0) : 
+              [...words].sort((a, b) => (a.level || 0) - (b.level || 0) + (Math.random() - 0.5));
+  if(studyPool.length === 0) return alert("暂无相关单词");
+  currentIdx = 0; showSection('study'); nextQ();
 }
 
-showWordList();
-
-// -------------------- Word 导入 --------------------
-function importWordDoc(){
-  const fileInput = document.getElementById('wordFile');
-  if(fileInput.files.length===0){ alert("请选择 Word 文件！"); return; }
-  const file = fileInput.files[0];
-
-  const reader = new FileReader();
-  reader.onload = function(event){
-    const arrayBuffer = event.target.result;
-    mammoth.extractRawText({arrayBuffer: arrayBuffer})
-      .then(function(result){
-        const text = result.value;
-        const lines = text.split(/\r?\n/);
-        let successCount = 0;
-        let errorLines = [];
-        lines.forEach((line,index)=>{
-          line = line.trim();
-          if(line){
-            const parts = line.split(/\s+/);
-            if(parts.length>=2){
-              const ch = parts[0];
-              const en = parts.slice(1).join(' ');
-              words.push({chinese:ch,english:en});
-              successCount++;
-            } else {
-              errorLines.push(index+1);
-            }
-          }
-        });
-        localStorage.setItem('words', JSON.stringify(words));
-        showWordList();
-        let msg = `成功导入 ${successCount} 个单词！`;
-        if(errorLines.length>0){
-          msg += `\n以下行格式错误未导入：${errorLines.join(', ')}`;
-        }
-        alert(msg);
-      })
-      .catch(function(err){
-        console.error(err);
-        alert("解析 Word 文件失败！");
-      });
-  };
-  reader.readAsArrayBuffer(file);
+function nextQ(){
+  if(currentIdx >= studyPool.length){ alert("练习结束！"); return showSection('manage'); }
+  document.getElementById('qPrompt').innerText = studyPool[currentIdx].en;
+  document.getElementById('studyStats').innerText = `Lv.${studyPool[currentIdx].level || 0}`;
+  document.getElementById('uInput').value = ""; document.getElementById('qFeedback').innerText = "";
+  document.getElementById('uInput').focus();
 }
 
-// -------------------- 背单词 --------------------
-let currentIndex = 0;
-let shuffledIndexes = [];
-let correctCount = 0;
-let totalCount = 0;
-let wrongList = [];
-let wordsForReview = null;
-
-function showSection(id){
-  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-function shuffle(array){ 
-  let arr = array.slice();
-  for(let i=arr.length-1;i>0;i--){
-    let j = Math.floor(Math.random()*(i+1));
-    [arr[i],arr[j]]=[arr[j],arr[i]];
-  }
-  return arr;
-}
-
-function startStudy(){
-  if(words.length===0){ alert("先添加单词！"); return; }
-  showSection('study');
-  shuffledIndexes = shuffle([...Array(words.length).keys()]);
-  currentIndex = 0;
-  correctCount = 0;
-  totalCount = 0;
-  wrongList = [];
-  wordsForReview = null;
-  showPrompt();
-  updateStats();
-}
-
-function showPrompt(list = words){
-  let idx = shuffledIndexes[currentIndex];
-  document.getElementById('prompt').innerText = "请输入中文释义：" + list[idx].english;
-  document.getElementById('userInput').value = "";
-  document.getElementById('answer').innerText = "";
-  document.getElementById('userInput').focus();
-}
-
-function checkAnswer(){
-  let idx = shuffledIndexes[currentIndex];
-  let currentList = wordsForReview || words;
-  let userInput = document.getElementById('userInput').value.trim();
-  let correct = currentList[idx].chinese;
-  totalCount++;
-
-  if(userInput === correct){
-    correctCount++;
+function handleCheck(){
+  const user = document.getElementById('uInput').value.trim().toLowerCase();
+  const target = studyPool[currentIdx];
+  const correct = target.ch.trim().toLowerCase();
+  const feedback = document.getElementById('qFeedback');
+  
+  if(user && (correct.includes(user) || user.includes(correct))){
+    feedback.style.color = "var(--success)"; feedback.innerText = "⭐ 正确！";
+    // 记录历史
+    const today = new Date().toLocaleDateString();
+    history[today] = (history[today] || 0) + 1;
+    // 升级
+    const mIdx = words.findIndex(w => w.en === target.en);
+    if(mIdx !== -1) { words[mIdx].level = (words[mIdx].level || 0) + 1; }
+    save();
+    setTimeout( ()=>{ currentIdx++; nextQ(); }, 600);
   } else {
-    document.getElementById('answer').innerText = "错误！正确答案是：" + correct;
-    wrongList.push(currentList[idx]);
+    feedback.style.color = "var(--danger)"; feedback.innerText = "❌ 答案：" + correct;
+    const mIdx = words.findIndex(w => w.en === target.en);
+    if(mIdx !== -1) { words[mIdx].level = 0; }
+    save();
+    setTimeout( ()=>{ currentIdx++; nextQ(); }, 1800);
   }
+}
 
-  currentIndex++;
-  if(currentIndex >= shuffledIndexes.length){
-    if(wrongList.length>0){
-      if(confirm(`本轮完成，正确率：${((correctCount/totalCount)*100).toFixed(1)}%，进入错题复习？`)){
-        shuffledIndexes = shuffle([...Array(wrongList.length).keys()]);
-        currentIndex=0;
-        wordsForReview = wrongList.slice();
-        wrongList=[];
-        showPrompt(wordsForReview);
-        updateStats();
-        return;
+// 其余功能保持
+function showReview(){
+  showSection('review');
+  const container = document.getElementById('wrongList');
+  const lows = words.filter(w => (w.level || 0) === 0);
+  container.innerHTML = lows.length ? "" : "暂无低掌握度单词";
+  lows.forEach(w => container.innerHTML += `<div class="word-item"><span>${w.en}</span><span>${w.ch}</span></div>`);
+}
+
+let firstCard = null;
+function startMatch(){
+  if(words.length < 5) return alert("单词量不足");
+  showSection('match');
+  const grid = document.getElementById('matchGrid'); grid.innerHTML = "";
+  let gameWords = [...words].sort(()=>Math.random()-0.5).slice(0, Math.min(words.length, 15));
+  let cards = [];
+  gameWords.forEach(w => { cards.push({txt: w.en, id: w.en}); cards.push({txt: w.ch, id: w.en}); });
+  cards.sort(()=>Math.random()-0.5).forEach(c => {
+    const div = document.createElement('div'); div.className = 'card'; div.innerText = c.txt;
+    div.onclick = () => {
+      if(div.classList.contains('hidden') || div === firstCard) return;
+      div.classList.add('selected');
+      if(!firstCard) { firstCard = div; firstCard.dataset.id = c.id; } 
+      else {
+        if(firstCard.dataset.id === c.id){ div.classList.add('hidden'); firstCard.classList.add('hidden'); } 
+        else { const t = firstCard; setTimeout(()=> { t.classList.remove('selected'); div.classList.remove('selected'); }, 300); }
+        firstCard = null;
       }
-    } else {
-      alert(`本轮完成，正确率：${((correctCount/totalCount)*100).toFixed(1)}%，全部答对！`);
-    }
-    startStudy();
-    return;
-  }
-  showPrompt(wordsForReview || words);
-  updateStats();
+    };
+    grid.appendChild(div);
+  });
 }
 
-function updateStats(){
-  document.getElementById('stats').innerText = `已答题：${totalCount}，正确：${correctCount}，正确率：${totalCount===0?0:((correctCount/totalCount)*100).toFixed(1)}%`;
+function exportData(){
+  const blob = new Blob([JSON.stringify(words)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `小背词备份_${new Date().toLocaleDateString()}.json`; a.click();
 }
-
-document.getElementById('userInput').addEventListener("keydown", function(e){
-  if(e.key==="Enter"){ checkAnswer(); }
-});
+function importData(e){
+  const reader = new FileReader();
+  reader.onload = (event) => { words = JSON.parse(event.target.result); save(); renderList(); alert("导入成功"); };
+  reader.readAsText(e.target.files[0]);
+}
+function clearAll(){ if(confirm("警告：这将彻底清空所有词库和学习历史！")) { words=[]; history={}; save(); renderList(); } }
+document.getElementById('uInput').addEventListener("keydown", e => { if(e.key==="Enter") handleCheck(); });
+// 初始化看板
+updateDashboard();
 </script>
-
 </body>
 </html>
