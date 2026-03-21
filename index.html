@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小背词 Pro · 功能全开版</title>
+    <title>小背词 Pro · 全能稳定版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <style>
         :root {
@@ -12,74 +12,66 @@
         }
 
         body { 
-            font-family: "PingFang SC", sans-serif; background: var(--bg); color: var(--text); 
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); 
             margin: 0; padding: env(safe-area-inset-top) 15px; display: flex; justify-content: center;
         }
 
         .container { width: 100%; max-width: 500px; }
 
-        /* 主题选择 */
-        .theme-picker { display: flex; justify-content: center; gap: 12px; margin: 15px 0; }
-        .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-
+        /* 看板与日历 - 统计区域 */
         .dashboard { 
-            background: var(--card); border-radius: 25px; padding: 18px;
-            margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.02);
+            background: var(--card); border-radius: 20px; padding: 15px;
+            margin: 10px 0; border: 1px solid rgba(0,0,0,0.02);
         }
-        .stat-row { display: flex; justify-content: space-around; align-items: center; margin-bottom: 15px;}
-        .stat-val { font-size: 24px; font-weight: 800; color: var(--primary); display: block; text-align: center;}
+        .stat-row { display: flex; justify-content: space-around; align-items: center; margin-bottom: 12px;}
+        .stat-val { font-size: 20px; font-weight: 800; color: var(--primary); display: block; text-align: center;}
         
-        /* 日历样式 */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; background: var(--bg); padding: 10px; border-radius: 15px; }
-        .cal-day { font-size: 10px; text-align: center; padding: 5px 0; border-radius: 5px; position: relative; }
-        .has-checkin::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: var(--primary); border-radius: 50%; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: var(--bg); padding: 8px; border-radius: 12px; }
+        .cal-day { font-size: 9px; text-align: center; padding: 4px 0; border-radius: 4px; position: relative; color: #ccc; }
+        .has-checkin { color: var(--text); font-weight: bold; }
+        .has-checkin::after { content: ''; position: absolute; bottom: 1px; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; background: var(--primary); border-radius: 50%; }
 
-        nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
-        nav button { padding: 14px 2px; background: var(--card); color: var(--primary); font-size: 13px; border: none; border-radius: 18px; cursor: pointer; }
+        /* 导航栏 - 禁用所有动画 */
+        nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+        nav button { padding: 12px 2px; background: var(--card); color: var(--primary); font-size: 13px; border: none; border-radius: 12px; cursor: pointer; }
         nav button.active { background: var(--primary); color: white; }
 
-        /* 内容区：去除了所有切换动画 */
-        .view-container { position: relative; width: 100%; }
+        /* 内容区 - 严格切换逻辑，无动画 */
+        .view-container { width: 100%; }
         section { 
-            display: none; background: var(--card); padding: 25px; 
-            border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            display: none; background: var(--card); padding: 20px; 
+            border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);
             width: 100%; box-sizing: border-box; flex-direction: column; 
         }
         section.active { display: flex; }
 
-        input, select { width: 100%; padding: 16px; margin: 10px 0; border: 2px solid #f0f4f2; border-radius: 18px; font-size: 15px; outline: none; box-sizing: border-box;}
-        .big-btn { border: none; border-radius: 18px; font-weight: 600; cursor: pointer; padding: 18px; font-size: 16px; width: 100%; margin-top: 10px; background: var(--primary); color: white; }
+        input, select { width: 100%; padding: 14px; margin: 8px 0; border: 2px solid #f0f4f2; border-radius: 12px; font-size: 14px; outline: none; box-sizing: border-box;}
+        .big-btn { border: none; border-radius: 12px; font-weight: 600; cursor: pointer; padding: 16px; font-size: 15px; width: 100%; margin-top: 8px; background: var(--primary); color: white; }
 
-        /* 消除网格：6x5 */
-        #matchGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-top: 10px; }
+        /* 消除网格：6x5 紧凑布局 */
+        #matchGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 8px; }
         .card { 
-            background: var(--bg); padding: 4px 2px; text-align: center; border-radius: 8px; font-size: 10px; min-height: 55px;
+            background: var(--bg); padding: 4px 2px; text-align: center; border-radius: 6px; font-size: 10px; min-height: 50px;
             display: flex; align-items: center; justify-content: center; border: 1.5px solid transparent; cursor: pointer;
-            overflow: hidden; word-break: break-all;
+            overflow: hidden; word-break: break-all; line-height: 1.2;
         }
         .card.selected { border-color: var(--primary); background: white; font-weight: bold; }
         .card.matched { visibility: hidden; pointer-events: none; }
 
-        #qFeedback { text-align: center; margin-top: 15px; padding: 10px; border-radius: 15px; font-size: 14px; min-height: 60px; }
-        .feedback-correct { background: #e8f5e9; color: #2e7d32; }
-        .feedback-wrong { background: #ffebee; color: #c62828; }
+        /* 反馈栏 */
+        #qFeedback { text-align: center; margin-top: 15px; padding: 12px; border-radius: 12px; font-size: 13px; min-height: 60px; line-height: 1.4; }
+        .feedback-correct { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .feedback-wrong { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="theme-picker">
-        <div class="color-dot" style="background: #8fb9a8;" onclick="setTheme('#8fb9a8','#f7f9f8')"></div>
-        <div class="color-dot" style="background: #a2c2e8;" onclick="setTheme('#a2c2e8','#f2f6fa')"></div>
-        <div class="color-dot" style="background: #e5b3bb;" onclick="setTheme('#e5b3bb','#faf2f3')"></div>
-        <div class="color-dot" style="background: #c3bef0;" onclick="setTheme('#c3bef0','#f5f4fd')"></div>
-    </div>
-
     <div class="dashboard">
         <div class="stat-row">
-            <div class="stat-item"><span id="streakDays" class="stat-val">0</span><span style="font-size:11px;opacity:0.6">打卡天数</span></div>
-            <div class="stat-item"><span id="todayCount" class="stat-val">0</span><span style="font-size:11px;opacity:0.6">今日词量</span></div>
-            <button onclick="doCheckin()" style="padding: 10px 20px; background: var(--accent); color: #8d6e63; border:none; border-radius:12px; font-weight:600; cursor:pointer;">每日签到</button>
+            <div class="stat-item"><span id="streakDays" class="stat-val">0</span><span style="font-size:10px;opacity:0.6">打卡天数</span></div>
+            <div class="stat-item"><span id="todayCount" class="stat-val">0</span><span style="font-size:10px;opacity:0.6">今日词量</span></div>
+            <button onclick="doCheckin()" style="padding: 8px 15px; background: var(--accent); color: #8d6e63; border:none; border-radius:10px; font-weight:600; cursor:pointer;">每日签到</button>
         </div>
         <div class="calendar-grid" id="calendarGrid"></div>
     </div>
@@ -94,62 +86,67 @@
     <div class="view-container">
         <section id="manage" class="active">
             <h3>词库配置</h3>
-            <button class="big-btn" onclick="loadBuiltIn()">激活 4942 考研词库</button>
-            <input type="file" id="wordFile" accept=".docx" style="margin-top:20px;">
-            <button class="big-btn" style="background:none; border:2px solid var(--primary); color:var(--primary);" onclick="handleWordImport()">追加个人文档</button>
-            <button onclick="clearAll()" style="margin-top: 30px; background:none; border:none; color:#ccc; font-size:11px;">重置所有数据</button>
+            <button class="big-btn" onclick="loadBuiltIn()">激活 4942 考研核心词</button>
+            <div style="margin-top:20px;">
+                <label style="font-size:12px;">导入个人 .docx 文档：</label>
+                <input type="file" id="wordFile" accept=".docx">
+                <button class="big-btn" style="background:none; border:2px solid var(--primary); color:var(--primary);" onclick="handleWordImport()">追加文档单词</button>
+            </div>
+            <button onclick="clearAll()" style="margin-top: 40px; background:none; border:none; color:#ccc; font-size:10px; cursor:pointer;">重置系统所有数据</button>
         </section>
 
         <section id="prep">
             <h3>学习设置</h3>
+            <label style="font-size:12px;">单词来源：</label>
             <select id="studySource">
                 <option value="mixed">全部混合</option>
-                <option value="builtin">仅内置</option>
-                <option value="imported">仅导入</option>
+                <option value="builtin">仅内置词库</option>
+                <option value="imported">仅导入文档</option>
             </select>
-            <input type="number" id="customSize" value="20" placeholder="本组单词数">
-            <button class="big-btn" onclick="startStudy(false)">进入背诵</button>
+            <label style="font-size:12px; margin-top:10px; display:block;">本组数量：</label>
+            <input type="number" id="customSize" value="20">
+            <button class="big-btn" onclick="startStudy(false)">进入学习模式</button>
         </section>
 
         <section id="study_core">
             <div id="studyInfo" style="font-size:11px; text-align:center; opacity:0.5;"></div>
-            <div id="qPrompt" style="font-size:40px; text-align:center; margin:30px 0; color:var(--primary); font-weight:800;"></div>
-            <input type="text" id="uInput" placeholder="输入中文意思..." autocomplete="off">
-            <button class="big-btn" onclick="handleCheck()">确认</button>
+            <div id="qPrompt" style="font-size:38px; text-align:center; margin:25px 0; color:var(--primary); font-weight:800;"></div>
+            <input type="text" id="uInput" placeholder="输入其中一个中文意思..." autocomplete="off">
+            <button class="big-btn" onclick="handleCheck()" id="submitBtn">确认回答</button>
             <div id="qFeedback"></div>
         </section>
 
         <section id="review">
-            <h3>单词熟练度</h3>
-            <div id="masteryStats" style="font-size: 12px; display: flex; justify-content: space-between; margin-bottom: 10px;">
-                <span>生词: <b id="m0">0</b></span> <span>熟悉: <b id="m1">0</b></span> <span>掌握: <b id="m2">0</b></span>
+            <h3>熟练度分布</h3>
+            <div id="masteryStats" style="font-size: 11px; display: flex; justify-content: space-between; margin-bottom: 12px; background: var(--bg); padding: 10px; border-radius: 10px;">
+                <span>生词(Lv0): <b id="m0">0</b></span> <span>熟悉(Lv1-2): <b id="m1">0</b></span> <span>掌握(Lv3): <b id="m2">0</b></span>
             </div>
-            <div id="wrongList" style="flex-grow:1; overflow-y:auto; font-size:14px;"></div>
-            <button class="big-btn" onclick="startStudy(true)">强化复习 (Mastery < 2)</button>
+            <div id="wrongList" style="flex-grow:1; overflow-y:auto; font-size:13px; max-height: 350px;"></div>
+            <button class="big-btn" onclick="startStudy(true)">强化复习 (Lv.0-2 单词)</button>
         </section>
 
         <section id="match">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h3 style="margin:0">消除赛 (6x5)</h3>
-                <select id="matchRange" style="width: auto; padding: 5px; margin: 0; font-size: 12px;" onchange="renderMatch()">
+                <select id="matchRange" style="width: auto; padding: 5px; margin: 0; font-size: 11px;" onchange="renderMatch()">
                     <option value="recent">最近背诵</option>
-                    <option value="all">全部单词</option>
+                    <option value="all">随机全部</option>
                 </select>
             </div>
             <div id="matchGrid"></div>
-            <button class="big-btn" style="margin-top:15px;" onclick="renderMatch()">换一批</button>
+            <button class="big-btn" style="margin-top:15px;" onclick="renderMatch()">换一组</button>
         </section>
     </div>
 </div>
 
 <script>
-// 数据结构
+// --- 数据初始化 ---
 let builtInWords = JSON.parse(localStorage.getItem('builtin_words') || '[]');
 let importedWords = JSON.parse(localStorage.getItem('imported_words') || '[]');
 let history = JSON.parse(localStorage.getItem('study_history') || '{}');
-let masteryMap = JSON.parse(localStorage.getItem('mastery_map') || '{}'); // {word: level}
-let checkins = JSON.parse(localStorage.getItem('checkins') || []);
-let lastStudiedQueue = JSON.parse(localStorage.getItem('last_studied_queue') || '[]'); // 记录最近学过的50个词
+let masteryMap = JSON.parse(localStorage.getItem('mastery_map') || '{}');
+let checkins = JSON.parse(localStorage.getItem('checkins') || '[]');
+let lastStudiedQueue = JSON.parse(localStorage.getItem('last_studied_queue') || '[]');
 
 function save(){
     localStorage.setItem('builtin_words', JSON.stringify(builtInWords));
@@ -161,11 +158,20 @@ function save(){
     updateDashboard();
 }
 
-// 瞬时切换页面
+// --- 路由逻辑：无动画切换 ---
 function changeView(id){
-    document.querySelectorAll('section').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
-    document.getElementById(id).style.display = 'flex';
-    
+    // 1. 强制隐藏所有
+    const sections = document.querySelectorAll('section');
+    sections.forEach(s => {
+        s.style.display = 'none';
+        s.classList.remove('active');
+    });
+    // 2. 显示目标
+    const target = document.getElementById(id);
+    target.style.display = 'flex';
+    target.classList.add('active');
+
+    // 导航高亮
     document.querySelectorAll('#navbar button').forEach(b => b.classList.remove('active'));
     const idxMap = {manage:0, prep:1, review:2, match:3, study_core:1};
     if(idxMap[id] !== undefined) document.querySelectorAll('#navbar button')[idxMap[id]].classList.add('active');
@@ -174,12 +180,10 @@ function changeView(id){
     if(id === 'review') renderMastery();
 }
 
-// 签到日历渲染
+// --- 看板与日历 ---
 function renderCalendar(){
-    const grid = document.getElementById('calendarGrid');
-    grid.innerHTML = "";
+    const grid = document.getElementById('calendarGrid'); grid.innerHTML = "";
     const now = new Date();
-    // 展示最近14天
     for(let i=13; i>=0; i--){
         const d = new Date(); d.setDate(now.getDate() - i);
         const dateStr = d.toLocaleDateString();
@@ -190,61 +194,93 @@ function renderCalendar(){
     }
 }
 
-// 熟练度逻辑
+function updateDashboard(){
+    const t = new Date().toLocaleDateString();
+    document.getElementById('todayCount').innerText = history[t] || 0;
+    let s = 0; let d = new Date();
+    while(checkins.includes(d.toLocaleDateString())){ s++; d.setDate(d.getDate()-1); }
+    document.getElementById('streakDays').innerText = s;
+    renderCalendar();
+}
+
+function doCheckin(){
+    const t = new Date().toLocaleDateString();
+    if(!checkins.includes(t)){ checkins.push(t); save(); alert("打卡成功！"); }
+}
+
+// --- 背词逻辑：语义匹配与全义展示 ---
+let currentIdx = 0, studyPool = [];
+function startStudy(isReview){
+    let base = [...builtInWords, ...importedWords];
+    if(isReview) studyPool = base.filter(w => (masteryMap[w.en] || 0) < 3).sort(()=>Math.random()-0.5).slice(0, 20);
+    else {
+        const src = document.getElementById('studySource').value;
+        if(src === 'builtin') base = builtInWords;
+        else if(src === 'imported') base = importedWords;
+        studyPool = base.sort(()=>Math.random()-0.5).slice(0, document.getElementById('customSize').value || 20);
+    }
+    if(studyPool.length === 0) return alert("词库为空或已全部掌握！");
+    currentIdx = 0; changeView('study_core'); nextQ();
+}
+
+function nextQ(){
+    if(currentIdx >= studyPool.length){ alert("本组任务完成！"); return changeView('prep'); }
+    const target = studyPool[currentIdx];
+    document.getElementById('qPrompt').innerText = target.en;
+    document.getElementById('studyInfo').innerText = `进度: ${currentIdx+1} / ${studyPool.length}`;
+    document.getElementById('uInput').value = "";
+    document.getElementById('qFeedback').className = "";
+    document.getElementById('qFeedback').innerHTML = "";
+    document.getElementById('uInput').focus();
+}
+
 function handleCheck(){
     const user = document.getElementById('uInput').value.trim();
     const target = studyPool[currentIdx];
     const feedback = document.getElementById('qFeedback');
     if(!user) return;
 
-    const isCorrect = target.ch.includes(user);
+    const isCorrect = target.ch.includes(user); // 语义包含即正确
     const mKey = target.en;
 
     if(isCorrect){
         feedback.className = "feedback-correct";
         feedback.innerHTML = `<b>✓ 正确</b><br><small>全义：${target.ch}</small>`;
-        // 增加熟练度 (最高3)
         masteryMap[mKey] = Math.min((masteryMap[mKey] || 0) + 1, 3);
-        
         const today = new Date().toLocaleDateString();
         history[today] = (history[today] || 0) + 1;
-        
-        // 加入最近学习队列
         if(!lastStudiedQueue.includes(mKey)) {
-            lastStudiedQueue.push(mKey);
-            if(lastStudiedQueue.length > 50) lastStudiedQueue.shift();
+            lastStudiedQueue.push(mKey); if(lastStudiedQueue.length > 60) lastStudiedQueue.shift();
         }
-        
         save();
-        setTimeout(()=>{ if(currentIdx < studyPool.length){currentIdx++; nextQ();} }, 1000);
+        setTimeout(()=>{ if(currentIdx < studyPool.length){currentIdx++; nextQ();} }, 1200);
     } else {
         feedback.className = "feedback-wrong";
-        feedback.innerHTML = `<b>× 记错了</b><br><small>全义：${target.ch}</small>`;
-        // 降低熟练度
-        masteryMap[mKey] = 0;
+        feedback.innerHTML = `<b>× 记错了</b><br><small>正确含义：${target.ch}</small>`;
+        masteryMap[mKey] = Math.max((masteryMap[mKey] || 0) - 1, 0); // 错题降级
         save();
-        setTimeout(()=>{ if(currentIdx < studyPool.length){currentIdx++; nextQ();} }, 2200);
+        setTimeout(()=>{ if(currentIdx < studyPool.length){currentIdx++; nextQ();} }, 2500);
     }
 }
 
-// 消除赛：支持“最近”或“全部”
+// --- 消除赛逻辑：6x5 ---
 function renderMatch(){
     const grid = document.getElementById('matchGrid'); grid.innerHTML = "";
     const range = document.getElementById('matchRange').value;
     let pool = [...builtInWords, ...importedWords];
     
-    if(range === 'recent') {
-        pool = pool.filter(w => lastStudiedQueue.includes(w.en));
-    }
-    
+    if(range === 'recent') pool = pool.filter(w => lastStudiedQueue.includes(w.en));
     if(pool.length < 15) {
-        grid.innerHTML = `<p style="grid-column: span 6; text-align:center; font-size:12px;">当前范围内单词不足 15 个<br>(已背诵 ${pool.length}/15)</p>`;
+        grid.innerHTML = `<div style="grid-column:span 6; font-size:11px; text-align:center; padding:30px; color:#999;">该范围内单词不足 15 个，请先去背词。</div>`;
         return;
     }
 
     let gameWords = pool.sort(()=>Math.random()-0.5).slice(0, 15);
     let cards = [];
-    gameWords.forEach(w => { cards.push({t: w.en, id: w.en}); cards.push({t: w.ch.split(/[；;]/)[0], id: w.en}); });
+    gameWords.forEach(w => {
+        cards.push({t: w.en, id: w.en});
+        cards.push({t: w.ch.split(/[；;]/)[0], id: w.en}); // 消除赛只显第一义
+    });
     
     let first = null;
     cards.sort(()=>Math.random()-0.5).forEach(c => {
@@ -263,63 +299,26 @@ function renderMatch(){
     });
 }
 
+// --- 熟练度渲染 ---
 function renderMastery(){
     let mCount = [0,0,0,0];
     const pool = [...builtInWords, ...importedWords];
-    pool.forEach(w => { mCount[masteryMap[w.en] || 0]++; });
+    pool.forEach(w => mCount[masteryMap[w.en] || 0]++);
     document.getElementById('m0').innerText = mCount[0];
-    document.getElementById('m1').innerText = mCount[1];
-    document.getElementById('m2').innerText = mCount[2] + mCount[3];
+    document.getElementById('m1').innerText = mCount[1] + mCount[2];
+    document.getElementById('m2').innerText = mCount[3];
 
-    const wrongs = pool.filter(w => (masteryMap[w.en] || 0) < 2);
-    document.getElementById('wrongList').innerHTML = wrongs.slice(0, 50).map(w => 
-        `<div style="padding:10px; border-bottom:1px solid #f9f9f9; display:flex; justify-content:space-between;">
-            <span><b>${w.en}</b> <small style="color:var(--primary)">[Lv.${masteryMap[w.en]||0}]</small></span>
-            <span style="opacity:0.6; font-size:12px;">${w.ch.split(/[；;]/)[0]}</span>
+    const list = pool.filter(w => masteryMap[w.en] !== undefined).sort((a,b)=> (masteryMap[a.en]||0)-(masteryMap[b.en]||0));
+    document.getElementById('wrongList').innerHTML = list.slice(0, 80).map(w => 
+        `<div style="padding:10px; border-bottom:1px solid #f9f9f9; display:flex; justify-content:space-between; align-items:center;">
+            <span><b>${w.en}</b> <small style="color:var(--primary); margin-left:8px;">Lv.${masteryMap[w.en]||0}</small></span>
+            <span style="opacity:0.6; font-size:11px; max-width:60%; text-align:right;">${w.ch.split(/[；;]/)[0]}</span>
         </div>`).join('');
 }
 
-// 基础功能保持
-function updateDashboard(){
-    const t = new Date().toLocaleDateString();
-    document.getElementById('todayCount').innerText = history[t] || 0;
-    let s = 0; let d = new Date();
-    while(checkins.includes(d.toLocaleDateString())){ s++; d.setDate(d.getDate()-1); }
-    document.getElementById('streakDays').innerText = s;
-    renderCalendar();
-}
-
-function doCheckin(){
-    const t = new Date().toLocaleDateString();
-    if(!checkins.includes(t)){ checkins.push(t); save(); }
-}
-
-function startStudy(isReview){
-    let base = [...builtInWords, ...importedWords];
-    if(isReview) studyPool = base.filter(w => (masteryMap[w.en] || 0) < 2);
-    else {
-        const src = document.getElementById('studySource').value;
-        if(src === 'builtin') base = builtInWords;
-        else if(src === 'imported') base = importedWords;
-        studyPool = base.sort(()=>Math.random()-0.5).slice(0, document.getElementById('customSize').value || 20);
-    }
-    if(studyPool.length === 0) return alert("词库空空如也");
-    currentIdx = 0; changeView('study_core'); nextQ();
-}
-
-function nextQ(){
-    if(currentIdx >= studyPool.length){ alert("学习结束"); return changeView('prep'); }
-    document.getElementById('qPrompt').innerText = studyPool[currentIdx].en;
-    document.getElementById('studyInfo').innerText = `${currentIdx+1}/${studyPool.length}`;
-    document.getElementById('uInput').value = "";
-    document.getElementById('qFeedback').className = "";
-    document.getElementById('qFeedback').innerHTML = "";
-    document.getElementById('uInput').focus();
-}
-
+// --- 词库导入 ---
 function loadBuiltIn(){
-    // 简易示例，实际应用时可贴入完整词库
-    const data = "ccustom|风俗；个人习惯；惠顾；海关；定做的
+    const data = `ccustom|风俗；个人习惯；惠顾；海关；定做的
 desperate|绝望的；孤注一掷的；渴望的；迫切的；严峻的
 redundancy|裁员；多余；累赘
 illiterate|文盲的；外行的；文盲
@@ -5001,12 +5000,12 @@ think|想；认为；思考；设想；记得
 know|知道；了解；认识；掌握；确信
 go|去；走；进行；变成；消失；运转
 say|说；表达；告诉；估计；传达
-get|得到；获得；到达；使；理解；变得";
+get|得到；获得；到达；使；理解；变得
     data.split('\n').forEach(line => {
         const [en, ch] = line.split('|');
-        if(en && !builtInWords.some(w => w.en === en)) builtInWords.push({en, ch});
+        if(en && !builtInWords.some(w => w.en === en)) builtInWords.push({en: en.trim(), ch: ch.trim()});
     });
-    save(); alert("激活成功");
+    save(); alert("4942 考研词库核心词已激活！");
 }
 
 function handleWordImport(){
@@ -5018,14 +5017,12 @@ function handleWordImport(){
             if(match && !importedWords.some(w => w.en === match[1].trim()))
                 importedWords.push({en: match[1].trim(), ch: match[2].replace(/^[:：\s\-\.]+/, '').trim()});
         });
-        save(); alert("导入成功");
+        save(); alert("文档导入成功！");
     });
 }
 
-function setTheme(p, b){ document.documentElement.style.setProperty('--primary',p); document.documentElement.style.setProperty('--bg',b); localStorage.setItem('tp',p); localStorage.setItem('tb',b); }
-function clearAll(){ if(confirm("确定清空？")){ localStorage.clear(); location.reload(); } }
+function clearAll(){ if(confirm("这将清空所有背词进度、熟练度和导入的词库，确定吗？")){ localStorage.clear(); location.reload(); } }
 document.getElementById('uInput').addEventListener("keydown", e => { if(e.key==="Enter") handleCheck(); });
-const tp = localStorage.getItem('tp'); if(tp) setTheme(tp, localStorage.getItem('tb'));
 updateDashboard();
 </script>
 </body>
