@@ -2,277 +2,142 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小背词 Pro 手机版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小背词 Pro · 智能语义版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <style>
         :root {
             --primary: #8fb9a8; --accent: #fcd0ba; --bg: #f7f9f8; 
             --card: #ffffff; --text: #546e7a; --success: #81c784; --danger: #ef9a9a;
+            --transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
-        * { -webkit-tap-highlight-color: transparent; outline: none; box-sizing: border-box; }
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg); color: var(--text); margin: 0; padding: 10px;
-            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            font-family: "PingFang SC", sans-serif; background: var(--bg); color: var(--text); 
+            margin: 0; padding: env(safe-area-inset-top) 15px; display: flex; justify-content: center;
+            overflow-x: hidden; transition: background 0.5s ease;
         }
 
-        .container { width: 100%; max-width: 450px; }
+        .container { width: 100%; max-width: 500px; opacity: 0; animation: siteEnter 0.8s var(--transition) forwards; }
+        @keyframes siteEnter { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 主题选择 */
+        .theme-picker { display: flex; justify-content: center; gap: 12px; margin-bottom: 15px; }
+        .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.3s; }
+        .color-dot.active { transform: scale(1.2); border-color: var(--text); }
 
         .dashboard { 
-            background: var(--card); border-radius: 18px; padding: 12px;
-            margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            background: var(--card); border-radius: 25px; padding: 18px;
+            display: flex; justify-content: space-around; align-items: center;
+            margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.02);
         }
-        .stat-row { display: flex; justify-content: space-around; align-items: center; margin-bottom: 8px;}
-        .stat-val { font-size: 20px; font-weight: 800; color: var(--primary); }
+        .stat-val { font-size: 24px; font-weight: 800; color: var(--primary); display: block; text-align: center;}
         
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; background: var(--bg); padding: 5px; border-radius: 10px; }
-        .cal-day { font-size: 9px; text-align: center; padding: 3px 0; color: #ccc; position: relative; }
-        .has-checkin { color: var(--text); font-weight: bold; }
-        .has-checkin::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; background: var(--primary); border-radius: 50%; }
-
-        nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 12px; }
-        nav button { 
-            padding: 10px 0; background: var(--card); color: var(--primary); font-size: 13px; 
-            border: none; border-radius: 12px; cursor: pointer; font-weight: 600;
-        }
+        nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
+        nav button { padding: 14px 2px; background: var(--card); color: var(--primary); font-size: 13px; border: none; border-radius: 18px; cursor: pointer; transition: 0.3s; }
         nav button.active { background: var(--primary); color: white; }
 
-        section { display: none; flex-direction: column; width: 100%; background: var(--card); padding: 15px; border-radius: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-        section.active { display: flex; }
-
-        h3 { margin-top: 0; font-size: 16px; border-left: 4px solid var(--primary); padding-left: 8px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1.5px solid #f0f4f2; border-radius: 12px; font-size: 15px; appearance: none; }
-        .big-btn { border: none; border-radius: 12px; font-weight: 600; cursor: pointer; padding: 14px; font-size: 15px; width: 100%; background: var(--primary); color: white; margin-top: 5px; }
-
-        /* 消除赛网格：15对词采用 5列 布局 */
-        #matchGrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-        .card { 
-            background: var(--bg); padding: 4px 2px; text-align: center; border-radius: 8px; font-size: 9px; min-height: 52px;
-            display: flex; align-items: center; justify-content: center; border: 1.5px solid transparent; line-height: 1.1; word-break: break-all;
+        .view-container { position: relative; width: 100%; }
+        section { 
+            display: none; background: var(--card); padding: 25px; 
+            border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            width: 100%; box-sizing: border-box; flex-direction: column; 
         }
-        .card.selected { border-color: var(--primary); background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-weight: bold;}
-        .card.matched { visibility: hidden; pointer-events: none; }
+        section.active { display: flex; animation: sectionIn 0.4s var(--transition); }
+        @keyframes sectionIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
-        #qFeedback { margin-top: 10px; padding: 10px; border-radius: 10px; font-size: 13px; min-height: 45px; text-align: center; }
-        .f-correct { background: #e8f5e9; color: #2e7d32; }
-        .f-wrong { background: #ffebee; color: #c62828; }
+        input, select { width: 100%; padding: 16px; margin: 10px 0; border: 2px solid #f0f4f2; border-radius: 18px; font-size: 15px; outline: none; box-sizing: border-box;}
+        .big-btn { border: none; border-radius: 18px; font-weight: 600; cursor: pointer; padding: 18px; font-size: 16px; width: 100%; margin-top: 10px; background: var(--primary); color: white; transition: 0.3s; }
 
-        .list-item { padding: 10px; border-bottom: 1px solid #f5f5f5; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        /* 消除网格：6x5 */
+        #matchGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-top: 10px; }
+        .card { 
+            background: var(--bg); padding: 4px 2px; text-align: center; border-radius: 8px; font-size: 10px; min-height: 55px;
+            display: flex; align-items: center; justify-content: center; border: 1.5px solid transparent; cursor: pointer; transition: 0.2s;
+            overflow: hidden; word-break: break-all;
+        }
+        .card.selected { border-color: var(--primary); background: white; color: var(--primary); font-weight: bold; }
+        .card.matched { animation: matchPop 0.4s forwards; pointer-events: none; }
+        @keyframes matchPop { 0% { transform: scale(1); } 100% { transform: scale(0); opacity: 0; } }
+
+        /* 反馈框增强 */
+        #qFeedback { text-align: center; margin-top: 15px; padding: 10px; border-radius: 15px; font-size: 14px; line-height: 1.5; min-height: 60px; transition: 0.3s; }
+        .feedback-correct { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .feedback-wrong { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div class="theme-picker">
+        <div class="color-dot" style="background: #8fb9a8;" onclick="setTheme('#8fb9a8','#f7f9f8')"></div>
+        <div class="color-dot" style="background: #a2c2e8;" onclick="setTheme('#a2c2e8','#f2f6fa')"></div>
+        <div class="color-dot" style="background: #e5b3bb;" onclick="setTheme('#e5b3bb','#faf2f3')"></div>
+        <div class="color-dot" style="background: #c3bef0;" onclick="setTheme('#c3bef0','#f5f4fd')"></div>
+    </div>
+
     <div class="dashboard">
-        <div class="stat-row">
-            <div><span id="streakDays" class="stat-val">0</span><span style="font-size:10px;opacity:0.6"> 打卡</span></div>
-            <div><span id="todayCount" class="stat-val">0</span><span style="font-size:10px;opacity:0.6"> 今日</span></div>
-            <button onclick="doCheckin()" style="padding: 6px 12px; background: var(--accent); color: #8d6e63; border:none; border-radius:8px; font-weight:600; font-size:12px;">签到打卡</button>
-        </div>
-        <div class="calendar-grid" id="calendarGrid"></div>
+        <div class="stat-item"><span id="streakDays" class="stat-val">0</span><span style="font-size:11px;opacity:0.6">打卡天数</span></div>
+        <div class="stat-item"><span id="todayCount" class="stat-val">0</span><span style="font-size:11px;opacity:0.6">今日词量</span></div>
+        <button onclick="doCheckin()" style="padding: 8px 18px; background: var(--accent); color: #8d6e63; border:none; border-radius:12px; font-weight:600; cursor:pointer;">签到</button>
     </div>
 
     <nav id="navbar">
         <button onclick="changeView('manage')" class="active">库管理</button>
         <button onclick="changeView('prep')">去背词</button>
-        <button onclick="changeView('review')">熟练度</button>
+        <button onclick="changeView('review')">错题本</button>
         <button onclick="changeView('match')">消除赛</button>
     </nav>
 
     <div class="view-container">
         <section id="manage" class="active">
-            <h3>词库设置</h3>
-            <button class="big-btn" onclick="loadBuiltIn()">加载内置考研词库</button>
-            <div style="margin-top:15px; border-top: 1px dashed #eee; padding-top:10px;">
-                <label style="font-size:12px;">从手机导入 .docx 文件：</label>
-                <input type="file" id="wordFile" accept=".docx">
-                <button class="big-btn" style="background:none; border:2px solid var(--primary); color:var(--primary);" onclick="handleWordImport()">点击导入</button>
-            </div>
-            <button onclick="clearAll()" style="margin-top: 25px; background:none; border:none; color:#ccc; font-size:10px;">清空所有本地数据</button>
+            <h3>词库配置</h3>
+            <button class="big-btn" onclick="loadBuiltIn()">激活 4942 考研词汇</button>
+            <p style="font-size:12px; margin-top:15px;">导入个人 .docx：</p>
+            <input type="file" id="wordFile" accept=".docx">
+            <button class="big-btn" style="background:none; border:2px solid var(--primary); color:var(--primary);" onclick="handleWordImport()">追加文档单词</button>
+            <button onclick="clearAll()" style="margin-top: 30px; background:none; border:none; color:#ccc; font-size:11px; cursor:pointer;">清空所有本地存储</button>
         </section>
 
         <section id="prep">
-            <h3>学习设置</h3>
+            <h3>背诵准备</h3>
+            <label style="font-size:12px;">范围选择：</label>
             <select id="studySource">
-                <option value="mixed">混合所有词库</option>
-                <option value="builtin">仅内置核心词</option>
-                <option value="imported">仅个人导入词</option>
+                <option value="mixed">全部混合</option>
+                <option value="builtin">仅内置词库</option>
+                <option value="imported">仅导入词库</option>
             </select>
-            <input type="number" id="customSize" value="15" placeholder="本组单词数量">
-            <button class="big-btn" onclick="startStudy(false)">开始本组学习</button>
+            <label style="font-size:12px; margin-top:10px; display:block;">本组单词数：</label>
+            <input type="number" id="customSize" value="20">
+            <button class="big-btn" onclick="startStudy(false)">开始背诵</button>
         </section>
 
         <section id="study_core">
-            <div id="studyInfo" style="font-size:10px; text-align:center; opacity:0.5;"></div>
-            <div id="qPrompt" style="font-size:32px; text-align:center; margin:15px 0; color:var(--primary); font-weight:800;"></div>
-            <input type="text" id="uInput" placeholder="请输入中文意思..." autocomplete="off" enterkeyhint="done">
-            <button class="big-btn" onclick="handleCheck()">确认提交</button>
+            <div id="studyInfo" style="font-size:11px; text-align:center; opacity:0.5;"></div>
+            <div id="qPrompt" style="font-size:40px; text-align:center; margin:30px 0; color:var(--primary); font-weight:800;"></div>
+            <input type="text" id="uInput" placeholder="输入其中一个中文意思即可..." autocomplete="off">
+            <button class="big-btn" onclick="handleCheck()" id="submitBtn">确认</button>
             <div id="qFeedback"></div>
         </section>
 
         <section id="review">
-            <h3>熟练度分布</h3>
-            <div style="font-size: 11px; display: flex; justify-content: space-between; margin-bottom: 10px; background: var(--bg); padding: 8px; border-radius: 10px;">
-                <span>生词: <b id="m0">0</b></span> <span>初步: <b id="m1">0</b></span> <span>熟记: <b id="m2">0</b></span>
-            </div>
-            <div id="wrongList" style="overflow-y:auto; max-height: 300px;"></div>
-            <button class="big-btn" onclick="startStudy(true)">复习 Lv.0-2 单词</button>
+            <h3>错题强化</h3>
+            <div id="wrongList" style="flex-grow:1; overflow-y:auto; margin-bottom:15px; font-size:14px;"></div>
+            <button class="big-btn" onclick="startStudy(true)">开始复习</button>
         </section>
 
         <section id="match">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="margin:0">消除赛 (15对词)</h3>
-                <select id="matchRange" style="width: auto; padding: 4px; margin: 0; font-size: 11px;" onchange="renderMatch()">
-                    <option value="recent">最近学习</option>
-                    <option value="all">随机全部</option>
-                </select>
-            </div>
+            <h3 style="margin:0 0 10px 0;">6x5 消除挑战</h3>
             <div id="matchGrid"></div>
-            <button class="big-btn" style="margin-top:10px;" onclick="renderMatch()">换一组词</button>
+            <button class="big-btn" style="margin-top:15px;" onclick="renderMatch()">换一组</button>
         </section>
     </div>
 </div>
 
 <script>
-let builtInWords = JSON.parse(localStorage.getItem('builtin_words') || '[]');
-let importedWords = JSON.parse(localStorage.getItem('imported_words') || '[]');
-let history = JSON.parse(localStorage.getItem('study_history') || '{}');
-let masteryMap = JSON.parse(localStorage.getItem('mastery_map') || '{}');
-let checkins = JSON.parse(localStorage.getItem('checkins') || '[]');
-let lastStudiedQueue = JSON.parse(localStorage.getItem('last_studied_queue') || '[]');
-
-function save(){
-    localStorage.setItem('builtin_words', JSON.stringify(builtInWords));
-    localStorage.setItem('imported_words', JSON.stringify(importedWords));
-    localStorage.setItem('study_history', JSON.stringify(history));
-    localStorage.setItem('mastery_map', JSON.stringify(masteryMap));
-    localStorage.setItem('checkins', JSON.stringify(checkins));
-    localStorage.setItem('last_studied_queue', JSON.stringify(lastStudiedQueue));
-    updateDashboard();
-}
-
-function changeView(id){
-    document.querySelectorAll('section').forEach(s => s.style.display = 'none');
-    document.getElementById(id).style.display = 'flex';
-    document.querySelectorAll('#navbar button').forEach(b => b.classList.remove('active'));
-    const btnMap = {manage:0, prep:1, review:2, match:3, study_core:1};
-    if(btnMap[id] !== undefined) document.querySelectorAll('#navbar button')[btnMap[id]].classList.add('active');
-    if(id === 'match') renderMatch();
-    if(id === 'review') renderMastery();
-}
-
-function updateDashboard(){
-    const t = new Date().toLocaleDateString();
-    document.getElementById('todayCount').innerText = history[t] || 0;
-    let s = 0, d = new Date();
-    while(checkins.includes(d.toLocaleDateString())){ s++; d.setDate(d.getDate()-1); }
-    document.getElementById('streakDays').innerText = s;
-    const grid = document.getElementById('calendarGrid'); grid.innerHTML = "";
-    for(let i=13; i>=0; i--){
-        const day = new Date(); day.setDate(new Date().getDate() - i);
-        const dom = document.createElement('div');
-        dom.className = 'cal-day' + (checkins.includes(day.toLocaleDateString()) ? ' has-checkin' : '');
-        dom.innerText = day.getDate();
-        grid.appendChild(dom);
-    }
-}
-
-function doCheckin(){
-    const t = new Date().toLocaleDateString();
-    if(!checkins.includes(t)){ checkins.push(t); save(); }
-}
-
-let currentIdx = 0, studyPool = [];
-function startStudy(isReview){
-    let base = [...builtInWords, ...importedWords];
-    if(isReview) studyPool = base.filter(w => (masteryMap[w.en] || 0) < 3).sort(()=>Math.random()-0.5).slice(0, 15);
-    else {
-        const src = document.getElementById('studySource').value;
-        if(src === 'builtin') base = builtInWords; else if(src === 'imported') base = importedWords;
-        studyPool = base.sort(()=>Math.random()-0.5).slice(0, document.getElementById('customSize').value || 15);
-    }
-    if(studyPool.length === 0) return alert("词库为空！");
-    currentIdx = 0; changeView('study_core'); nextQ();
-}
-
-function nextQ(){
-    if(currentIdx >= studyPool.length){ alert("本组完成！"); return changeView('prep'); }
-    document.getElementById('qPrompt').innerText = studyPool[currentIdx].en;
-    document.getElementById('studyInfo').innerText = `${currentIdx+1} / ${studyPool.length}`;
-    document.getElementById('uInput').value = "";
-    document.getElementById('qFeedback').className = "";
-    document.getElementById('qFeedback').innerHTML = "";
-    document.getElementById('uInput').focus();
-}
-
-function handleCheck(){
-    const user = document.getElementById('uInput').value.trim();
-    if(!user) return;
-    const target = studyPool[currentIdx];
-    const feedback = document.getElementById('qFeedback');
-    const isCorrect = target.ch.includes(user);
-    if(isCorrect){
-        feedback.className = "f-correct"; feedback.innerHTML = `<b>正确</b><br>${target.ch}`;
-        masteryMap[target.en] = Math.min((masteryMap[target.en] || 0) + 1, 3);
-        const t = new Date().toLocaleDateString();
-        history[t] = (history[t] || 0) + 1;
-        if(!lastStudiedQueue.includes(target.en)){
-            lastStudiedQueue.push(target.en); if(lastStudiedQueue.length > 60) lastStudiedQueue.shift();
-        }
-        save(); setTimeout(()=>{ if(currentIdx < studyPool.length){currentIdx++; nextQ();} }, 1000);
-    } else {
-        feedback.className = "f-wrong"; feedback.innerHTML = `<b>错误</b><br>${target.ch}`;
-        masteryMap[target.en] = 0; save();
-        setTimeout(()=>{ if(currentIdx < studyPool.length){currentIdx++; nextQ();} }, 2000);
-    }
-}
-
-function renderMatch(){
-    const grid = document.getElementById('matchGrid'); grid.innerHTML = "";
-    const range = document.getElementById('matchRange').value;
-    let pool = [...builtInWords, ...importedWords];
-    if(range === 'recent') pool = pool.filter(w => lastStudiedQueue.includes(w.en));
-    if(pool.length < 15) { grid.innerHTML = `<div style="grid-column:span 5;text-align:center;padding:20px;font-size:12px;">单词量不足(需15对词)</div>`; return; }
-    
-    let gameWords = pool.sort(()=>Math.random()-0.5).slice(0, 15); // 改为15对词
-    let cards = [];
-    gameWords.forEach(w => { cards.push({t: w.en, id: w.en}); cards.push({t: w.ch.split(/[；;]/)[0], id: w.en}); });
-    let first = null;
-    cards.sort(()=>Math.random()-0.5).forEach(c => {
-        const d = document.createElement('div'); d.className = 'card'; d.innerText = c.t;
-        d.onclick = () => {
-            if(d.classList.contains('matched') || d === first) return;
-            d.classList.add('selected');
-            if(!first) { first = d; first.dataset.id = c.id; } 
-            else {
-                if(first.dataset.id === c.id){ d.classList.add('matched'); first.classList.add('matched'); } 
-                else { const t = first; setTimeout(()=> { t.classList.remove('selected'); d.classList.remove('selected'); }, 300); }
-                first = null;
-            }
-        };
-        grid.appendChild(d);
-    });
-}
-
-function renderMastery(){
-    let m = [0,0,0,0];
-    const pool = [...builtInWords, ...importedWords];
-    pool.forEach(w => m[masteryMap[w.en] || 0]++);
-    document.getElementById('m0').innerText = m[0];
-    document.getElementById('m1').innerText = m[1] + m[2];
-    document.getElementById('m2').innerText = m[3];
-    const wrongs = pool.filter(w => (masteryMap[w.en]||0) < 3).slice(0, 40);
-    document.getElementById('wrongList').innerHTML = wrongs.map(w => `
-        <div class="list-item">
-            <span><b>${w.en}</b> <small style="color:var(--primary)">Lv.${masteryMap[w.en]||0}</small></span>
-            <span style="opacity:0.6;font-size:11px;">${w.ch.split(/[；;]/)[0]}</span>
-        </div>`).join('');
-}
-
-function loadBuiltIn(){
-    const data = "custom|风俗；个人习惯；惠顾；海关；定做的
+// 内置部分词库示例
+const BUILT_IN_DB = `
+ccustom|风俗；个人习惯；惠顾；海关；定做的
 desperate|绝望的；孤注一掷的；渴望的；迫切的；严峻的
 redundancy|裁员；多余；累赘
 illiterate|文盲的；外行的；文盲
@@ -4954,12 +4819,52 @@ think|想；认为；思考；设想；记得
 know|知道；了解；认识；掌握；确信
 go|去；走；进行；变成；消失；运转
 say|说；表达；告诉；估计；传达
-get|得到；获得；到达；使；理解；变得";
-    data.split('\n').forEach(line => {
+get|得到；获得；到达；使；理解；变得
+`.trim();
+
+let builtInWords = JSON.parse(localStorage.getItem('builtin_words') || '[]');
+let importedWords = JSON.parse(localStorage.getItem('imported_words') || '[]');
+let history = JSON.parse(localStorage.getItem('study_history') || '{}');
+let wrongs = JSON.parse(localStorage.getItem('wrongs') || '[]');
+let checkins = JSON.parse(localStorage.getItem('checkins') || '[]');
+
+function save(){
+    localStorage.setItem('builtin_words', JSON.stringify(builtInWords));
+    localStorage.setItem('imported_words', JSON.stringify(importedWords));
+    localStorage.setItem('study_history', JSON.stringify(history));
+    localStorage.setItem('wrongs', JSON.stringify(wrongs));
+    localStorage.setItem('checkins', JSON.stringify(checkins));
+    updateDashboard();
+}
+
+function changeView(id){
+    document.querySelectorAll('section').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
+    const target = document.getElementById(id);
+    target.style.display = 'flex';
+    setTimeout(() => target.classList.add('active'), 10);
+
+    const navButtons = document.querySelectorAll('#navbar button');
+    navButtons.forEach(b => b.classList.remove('active'));
+    const idxMap = {manage:0, prep:1, review:2, match:3, study_core:1};
+    if(idxMap[id] !== undefined) navButtons[idxMap[id]].classList.add('active');
+
+    if(id === 'match') renderMatch();
+    if(id === 'review') renderWrongs();
+}
+
+function setTheme(primary, bg) {
+    document.documentElement.style.setProperty('--primary', primary);
+    document.documentElement.style.setProperty('--bg', bg);
+    localStorage.setItem('theme_primary', primary);
+    localStorage.setItem('theme_bg', bg);
+}
+
+function loadBuiltIn() {
+    BUILT_IN_DB.split('\n').forEach(line => {
         const [en, ch] = line.split('|');
-        if(en && !builtInWords.some(w => w.en === en)) builtInWords.push({en: en.trim(), ch: ch.trim()});
+        if(en && ch && !builtInWords.some(w => w.en === en.trim())) builtInWords.push({en: en.trim(), ch: ch.trim()});
     });
-    save(); alert("内置词库已加载");
+    save(); alert("内置核心词已激活！");
 }
 
 function handleWordImport(){
@@ -4971,12 +4876,110 @@ function handleWordImport(){
             if(match && !importedWords.some(w => w.en === match[1].trim()))
                 importedWords.push({en: match[1].trim(), ch: match[2].replace(/^[:：\s\-\.]+/, '').trim()});
         });
-        save(); alert("追加导入成功！");
-    }).catch(e => alert("文件读取失败"));
+        save(); alert("导入完毕！");
+    });
 }
 
-function clearAll(){ if(confirm("确定重置？进度将消失")) { localStorage.clear(); location.reload(); } }
+// 学习逻辑
+let currentIdx = 0, studyPool = [];
+function startStudy(isReview){
+    if(isReview) studyPool = [...wrongs];
+    else {
+        const source = document.getElementById('studySource').value;
+        let base = (source==='builtin')?builtInWords:(source==='imported')?importedWords:[...builtInWords,...importedWords];
+        studyPool = base.sort(() => Math.random() - 0.5).slice(0, parseInt(document.getElementById('customSize').value) || 20);
+    }
+    if(studyPool.length === 0) return alert("当前范围内没有单词。");
+    currentIdx = 0; changeView('study_core'); nextQ();
+}
+
+function nextQ(){
+    if(currentIdx >= studyPool.length){ alert("任务圆满完成！"); return changeView('prep'); }
+    document.getElementById('qPrompt').innerText = studyPool[currentIdx].en;
+    document.getElementById('studyInfo').innerText = `Progress: ${currentIdx+1} / ${studyPool.length}`;
+    document.getElementById('uInput').value = "";
+    document.getElementById('qFeedback').className = "";
+    document.getElementById('qFeedback').innerHTML = "";
+    document.getElementById('uInput').focus();
+}
+
+// --- 核心：模糊匹配与全义展示逻辑 ---
+function handleCheck(){
+    const user = document.getElementById('uInput').value.trim();
+    const target = studyPool[currentIdx];
+    const feedback = document.getElementById('qFeedback');
+    
+    if(!user) return;
+
+    // 只要用户的输入出现在释义字符串中，即判定为正确
+    const isCorrect = target.ch.includes(user);
+
+    if(isCorrect){
+        feedback.className = "feedback-correct";
+        feedback.innerHTML = `<b>✓ 正确</b><br><small>完整释义：${target.ch}</small>`;
+        
+        const today = new Date().toLocaleDateString();
+        history[today] = (history[today] || 0) + 1;
+        wrongs = wrongs.filter(w => w.en !== target.en);
+        save();
+        // 正确时停留较短，自动进入下一题
+        setTimeout(()=>{ if(currentIdx < studyPool.length) {currentIdx++; nextQ();} }, 1200);
+    } else {
+        feedback.className = "feedback-wrong";
+        feedback.innerHTML = `<b>× 记错了</b><br><small>释义：${target.ch}</small>`;
+        if(!wrongs.some(w => w.en === target.en)) wrongs.push(target);
+        save();
+        // 错误时停留更久，方便看清释义
+        setTimeout(()=>{ if(currentIdx < studyPool.length) {currentIdx++; nextQ();} }, 2500);
+    }
+}
+
+function renderMatch(){
+    const grid = document.getElementById('matchGrid'); grid.innerHTML = "";
+    const pool = [...builtInWords, ...importedWords];
+    if(pool.length < 15) return grid.innerHTML = "词库不足15个词";
+    let gameWords = pool.sort(()=>Math.random()-0.5).slice(0, 15);
+    let cards = [];
+    gameWords.forEach(w => { cards.push({t: w.en, id: w.en}); cards.push({t: w.ch.split(/[；;]/)[0], id: w.en}); });
+    let first = null;
+    cards.sort(()=>Math.random()-0.5).forEach(c => {
+        const d = document.createElement('div'); d.className = 'card'; d.innerText = c.t;
+        d.onclick = () => {
+            if(d.classList.contains('matched') || d === first) return;
+            d.classList.add('selected');
+            if(!first) { first = d; first.dataset.id = c.id; } 
+            else {
+                if(first.dataset.id === c.id){ d.classList.add('matched'); first.classList.add('matched'); } 
+                else { const t = first; setTimeout(()=> { t.classList.remove('selected'); d.classList.remove('selected'); }, 300); }
+                first = null;
+            }
+        };
+        grid.appendChild(d);
+    });
+}
+
+function renderWrongs(){
+    document.getElementById('wrongList').innerHTML = wrongs.map(w => `<div style="padding:10px; border-bottom:1px solid #f9f9f9;"><b>${w.en}</b> <span style="float:right; opacity:0.6; font-size:12px;">${w.ch}</span></div>`).join('');
+}
+
+function updateDashboard(){
+    const t = new Date().toLocaleDateString();
+    document.getElementById('todayCount').innerText = history[t] || 0;
+    let s = 0; let d = new Date();
+    while(checkins.includes(d.toLocaleDateString())){ s++; d.setDate(d.getDate()-1); }
+    document.getElementById('streakDays').innerText = s;
+}
+
+function doCheckin(){
+    const t = new Date().toLocaleDateString();
+    if(!checkins.includes(t)){ checkins.push(t); save(); alert("打卡成功！"); }
+}
+
+function clearAll(){ if(confirm("确定重置所有数据？")) { localStorage.clear(); location.reload(); } }
 document.getElementById('uInput').addEventListener("keydown", e => { if(e.key==="Enter") handleCheck(); });
+
+const sp = localStorage.getItem('theme_primary');
+if(sp) setTheme(sp, localStorage.getItem('theme_bg'));
 updateDashboard();
 </script>
 </body>
