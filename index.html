@@ -481,9 +481,26 @@ input[type="file"] {
   </div>
  
   <div class="card">
-    <div class="card-title">内置考研词汇</div>
-    <p style="font-size:13px;color:#8a9088;margin-bottom:12px;">包含考研核心词汇，一键激活使用。</p>
+    <div class="card-title">内置词库</div>
+    <p style="font-size:13px;color:#8a9088;margin-bottom:12px;">包含核心词汇，一键激活使用。</p>
     <button class="btn btn-dark" onclick="loadBuiltIn()">激活内置词库</button>
+  </div>
+ 
+  <div class="card">
+    <div class="card-title">粘贴导入个人词库</div>
+    <p style="font-size:12px;color:#8a9088;margin-bottom:10px;">每行一个词，格式：<b style="color:#1e2a1f;">单词|释义</b>，例：abandon|放弃；抛弃<br>支持竖线 | 冒号 : 制表符分隔，与内置词库独立</p>
+    <textarea id="pasteInput"
+      placeholder="在此粘贴词汇，每行格式：&#10;abandon|放弃；抛弃&#10;achieve|达到；实现"
+      style="width:100%;height:130px;padding:12px;border:1.5px solid #ece8df;border-radius:12px;font-size:13px;font-family:-apple-system,sans-serif;background:#f2ede4;color:#1e2a1f;resize:none;outline:none;line-height:1.6;display:block;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn btn-outline" style="flex:1;margin:0;" onclick="handlePasteImport()">导入</button>
+      <button class="btn btn-ghost" style="flex:0 0 72px;margin:0;font-size:12px;padding:12px 4px;" onclick="clearImported()">清空词库</button>
+    </div>
+    <div id="pasteMsg" style="font-size:12px;color:#8a9088;margin-top:8px;min-height:16px;"></div>
+    <div id="importedPreview" style="margin-top:10px;display:none;">
+      <div style="font-size:11px;color:#8a9088;margin-bottom:6px;">已导入词汇预览</div>
+      <div id="importedPreviewList" style="max-height:180px;overflow-y:auto;"></div>
+    </div>
   </div>
  
   <div class="card">
@@ -541,7 +558,7 @@ function goTab(id) {
   window.scrollTo(0, 0);
   if (id === 'p-home')    { refreshDash(); renderCalendar(); }
   if (id === 'p-wrong')   renderWrongList();
-  if (id === 'p-lib')     refreshLib();
+  if (id === 'p-lib')     { refreshLib(); refreshImportedPreview(); }
 }
  
 // ── 主题 ──
@@ -6828,6 +6845,80 @@ function handleImport() {
     }).catch(() => { msg.textContent='✗ 解析失败'; });
   };
   reader.readAsArrayBuffer(file);
+}
+ 
+function handlePasteImport() {
+  const raw = document.getElementById('pasteInput').value.trim();
+  const msg = document.getElementById('pasteMsg');
+  if (!raw) { msg.textContent = '请先粘贴词汇内容'; return; }
+ 
+  let add = 0, skip = 0, fail = 0;
+  raw.split(/[\r\n]+/).forEach(line => {
+    line = line.trim(); if (!line) return;
+    let en = '', ch = '';
+    // 支持 | ： : \t 分隔
+    for (const sep of ['|', '：', ':', '\t']) {
+      const idx = line.indexOf(sep);
+      if (idx > 0) {
+        const l = line.slice(0, idx).trim();
+        const r = line.slice(idx + sep.length).trim();
+        if (/^[a-zA-Z][\w\s\-']*$/.test(l) && r) { en = l; ch = r; break; }
+      }
+    }
+    // 空格兜底
+    if (!en) {
+      const m = line.match(/^([a-zA-Z][\w\s\-']{1,30}?)\s{2,}(.{2,})$/);
+      if (m) { en = m[1].trim(); ch = m[2].trim(); }
+    }
+    if (en && ch) {
+      if (!imported.some(w => w.en === en)) { imported.push({en, ch}); add++; }
+      else skip++;
+    } else {
+      fail++;
+    }
+  });
+ 
+  save();
+  refreshLib();
+  refreshDash();
+  refreshImportedPreview();
+ 
+  let txt = `✓ 新增 ${add} 词`;
+  if (skip) txt += `，跳过重复 ${skip} 词`;
+  if (fail) txt += `，无法识别 ${fail} 行`;
+  msg.style.color = add > 0 ? '#6b9e7e' : '#c4767e';
+  msg.textContent = txt;
+ 
+  // 清空输入框
+  if (add > 0) document.getElementById('pasteInput').value = '';
+}
+ 
+function clearImported() {
+  if (!imported.length) { document.getElementById('pasteMsg').textContent = '个人词库已经是空的'; return; }
+  if (confirm(`确定清空全部 ${imported.length} 个个人词汇？`)) {
+    imported = [];
+    // 同步清除错题中属于imported的词
+    save();
+    refreshLib();
+    refreshDash();
+    refreshImportedPreview();
+    document.getElementById('pasteMsg').style.color = '#8a9088';
+    document.getElementById('pasteMsg').textContent = '个人词库已清空';
+  }
+}
+ 
+function refreshImportedPreview() {
+  const wrap = document.getElementById('importedPreview');
+  const list = document.getElementById('importedPreviewList');
+  if (!wrap || !list) return;
+  if (!imported.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  list.innerHTML = imported.slice(0, 50).map(w =>
+    `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f2ec;font-size:12px;">
+      <span style="font-weight:600;">${w.en}</span>
+      <span style="color:#8a9088;max-width:60%;text-align:right;">${w.ch}</span>
+    </div>`
+  ).join('') + (imported.length > 50 ? `<div style="font-size:11px;color:#8a9088;padding:6px 0;">…还有 ${imported.length - 50} 词</div>` : '');
 }
  
 function clearAll() {
