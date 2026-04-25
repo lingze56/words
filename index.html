@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>小背词 Pro · 考研版</title>
+  <title>小背词 Pro · 考研轻量版</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -12,8 +12,6 @@
       background: #f8f5ef; color: #1e2a1f; padding-bottom: 80px;
     }
     .top-bar { height: 3px; background: linear-gradient(90deg, #6b9e7e, #c9a84c, #c4767e); }
- 
-    /* 底部导航 */
     .tab-bar {
       position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
       border-top: 1px solid #ece8df; display: flex; padding-bottom: env(safe-area-inset-bottom); z-index: 100;
@@ -24,10 +22,8 @@
     }
     .tab .ti { font-size: 20px; line-height: 1; }
     .tab.on { color: #6b9e7e; }
- 
     .page { display: none; padding: 12px 14px 20px; min-height: 100vh; }
     .page.on { display: block; }
- 
     .card {
       background: #fff; border-radius: 18px; padding: 18px; border: 1px solid #ece8df;
       box-shadow: 0 2px 10px rgba(30,42,31,0.06); margin-bottom: 12px;
@@ -37,7 +33,6 @@
       text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
     }
     .card-title::after { content: ''; flex: 1; height: 1px; background: #ece8df; }
- 
     .btn {
       display: block; width: 100%; padding: 14px; border: none; border-radius: 13px;
       font-size: 15px; font-weight: 600; cursor: pointer; text-align: center; margin-bottom: 8px;
@@ -47,7 +42,6 @@
     .btn-green { background: #6b9e7e; color: #fff; }
     .btn-outline { background: transparent; color: #6b9e7e; border: 1.5px solid #6b9e7e; }
     .btn-ghost { background: transparent; color: #bbb; border: 1px dashed #ddd; font-size: 13px; padding: 11px; }
- 
     .flabel { font-size: 11px; color: #8a9088; margin-bottom: 5px; display: block; }
     select, input[type="number"], input[type="text"], textarea {
       width: 100%; padding: 12px 14px; border: 1.5px solid #ece8df; border-radius: 12px;
@@ -58,15 +52,12 @@
       width: 100%; padding: 10px; border: 1.5px dashed #ece8df; border-radius: 12px;
       font-size: 13px; background: #f2ede4; color: #1e2a1f; margin-bottom: 10px;
     }
- 
     .stat-row {
       display: flex; justify-content: space-between; align-items: center;
       padding: 10px 0; border-bottom: 1px solid #f5f2ec; font-size: 14px;
     }
     .stat-row:last-child { border-bottom: none; }
     .stat-val { font-weight: 700; color: #6b9e7e; }
- 
-    /* 首页网格 */
     .today-row { display: flex; gap: 0; margin-bottom: 12px; }
     .today-stat {
       flex: 1; background: #fff; text-align: center; padding: 16px 8px;
@@ -77,7 +68,6 @@
     .today-stat:not(:first-child):not(:last-child) { border-right: none; }
     .ts-num { font-size: 26px; font-weight: 800; color: #6b9e7e; line-height: 1; }
     .ts-lbl { font-size: 10px; color: #8a9088; margin-top: 3px; }
- 
     .ci-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .ci-month { font-size: 12px; color: #8a9088; }
     .ci-btn {
@@ -95,15 +85,12 @@
     .ci-cell.today { border: 2px solid #c9a84c; color: #c9a84c; font-weight: 700; }
     .ci-cell.today.hit { background: #c9a84c; border-color: #c9a84c; color: #fff; }
     .ci-cell.empty { background: transparent; border-color: transparent; }
- 
     .theme-row { display: flex; gap: 10px; flex-wrap: wrap; padding: 2px 0; }
     .tdot {
       width: 34px; height: 34px; border-radius: 50%; border: 3px solid transparent;
       cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }
     .tdot.on { border-color: #1e2a1f; transform: scale(1.12); }
- 
-    /* 学习页流程条 */
     .flow-bar { display: flex; gap: 5px; margin-bottom: 10px; }
     .fs {
       flex: 1; text-align: center; padding: 8px 2px; border-radius: 10px;
@@ -112,8 +99,6 @@
     .fs .fi { font-size: 15px; display: block; margin-bottom: 2px; }
     .fs.on { background: #6b9e7e; border-color: #6b9e7e; color: #fff; font-weight: 700; }
     .fs.done { background: #e8f3ed; border-color: #e8f3ed; color: #6b9e7e; }
- 
-    /* 背词卡片 */
     .study-card {
       background: #fff; border-radius: 18px; border: 1px solid #ece8df;
       box-shadow: 0 2px 10px rgba(30,42,31,0.06); margin-bottom: 10px; overflow: hidden;
@@ -140,7 +125,6 @@
     .sc-fb:empty { display: none; }
     .fb-ok { background: #edf7f0; border: 1px solid #bce4c8; color: #1a5e2a; }
     .fb-err { background: #fff0f0; border: 1px solid #f5c6cb; color: #922; }
- 
     .sc-bottom { padding: 14px 18px 18px; border-top: 1px solid #ece8df; }
     .sc-input {
       display: block; width: 100%; padding: 13px 16px; margin-bottom: 10px;
@@ -157,13 +141,10 @@
       flex: 0 0 68px; padding: 15px 8px; background: #f2ede4; color: #8a9088;
       border: 1px solid #ece8df; border-radius: 12px; font-size: 13px; cursor: pointer;
     }
- 
     .done-wrap { text-align: center; padding: 36px 20px 20px; }
     .done-icon { font-size: 48px; margin-bottom: 12px; }
     .done-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
     .done-sub { font-size: 13px; color: #8a9088; line-height: 1.7; margin-bottom: 20px; }
- 
-    /* 消除赛 */
     .ms-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .ms-score { font-size: 22px; font-weight: 800; color: #6b9e7e; }
     .ms-pairs { font-size: 12px; color: #8a9088; }
@@ -188,14 +169,11 @@
       30% { transform: translateX(-5px); }
       70% { transform: translateX(5px); }
     }
- 
-    /* 错题本 / 单词等级表 */
     .w-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid #f5f2ec; gap: 12px; }
     .w-item:last-child { border-bottom: none; }
     .w-en { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
     .w-ch { font-size: 11px; color: #8a9088; line-height: 1.5; text-align: right; max-width: 58%; }
     .w-dots { display: flex; gap: 3px; margin-top: 2px; }
- 
     .small-btn {
       padding: 6px 12px; border-radius: 8px; border: 1px solid #ccc; background: #f8f8f8;
       font-size: 12px; cursor: pointer; margin-left: 8px;
@@ -206,6 +184,10 @@
     .token-input {
       flex: 1; padding: 10px 12px; border: 1px solid #ece8df; border-radius: 10px;
       font-size: 13px; background: #fff; color: #1e2a1f;
+    }
+    .search-input {
+      width: 130px; margin-left: 12px; font-size: 13px; padding: 6px 10px;
+      border: 1px solid #ece8df; border-radius: 8px;
     }
   </style>
 </head>
@@ -220,7 +202,6 @@
     <div class="today-stat"><div class="ts-num" id="totalNum">0</div><div class="ts-lbl">词库总量</div></div>
     <div class="today-stat"><div class="ts-num" id="wrongNum">0</div><div class="ts-lbl">错题数量</div></div>
   </div>
- 
   <div class="card">
     <div class="ci-row">
       <span class="ci-month" id="ciMonthLbl"></span>
@@ -229,12 +210,10 @@
     <div class="ci-grid" id="ciWeekHead"></div>
     <div class="ci-grid" id="ciGrid" style="margin-top:4px;"></div>
   </div>
- 
   <div class="card">
     <div class="card-title">主题颜色</div>
     <div class="theme-row" id="themeRow"></div>
   </div>
- 
   <div class="card">
     <div class="card-title">导入词库</div>
     <label class="flabel">上传 .docx（每行：英文 中文，支持 | ： : 空格分隔）</label>
@@ -242,7 +221,6 @@
     <button class="btn btn-outline" onclick="handleImport()">追加导入</button>
     <div id="importMsg" style="font-size:12px;color:#8a9088;margin-top:6px;min-height:16px;"></div>
   </div>
- 
   <div class="card">
     <div class="card-title">墨墨 API Token</div>
     <div class="token-area">
@@ -261,7 +239,6 @@
     <div class="fs" id="fs-study"><span class="fi">📖</span>背词</div>
     <div class="fs" id="fs-review"><span class="fi">🔁</span>复习</div>
   </div>
- 
   <div class="card" id="panConfig">
     <div class="card-title">学习配置</div>
     <label class="flabel">词库来源</label>
@@ -275,7 +252,6 @@
     <p style="font-size:11px;color:#8a9088;margin-bottom:12px;">流程：消除赛热身 → 背词（随机）→ 复习错词</p>
     <button class="btn btn-dark" onclick="startSession()">开始学习</button>
   </div>
- 
   <div class="card" id="panMatch" style="display:none;">
     <div class="card-title">消除赛热身 <span id="sRoundLbl" style="font-size:10px;font-weight:400;opacity:0.7;"></span></div>
     <div class="ms-bar">
@@ -288,7 +264,6 @@
       <button class="btn btn-outline" style="flex:1;margin:0;" onclick="goToStudy()">跳过→背词</button>
     </div>
   </div>
- 
   <div class="study-card" id="panStudy" style="display:none;">
     <div class="sc-top">
       <div class="sc-info-row"><span id="studyInfo"></span><span id="studyProf"></span></div>
@@ -309,7 +284,6 @@
       </div>
     </div>
   </div>
- 
   <div class="card" id="panStudyDone" style="display:none;">
     <div class="done-wrap">
       <div class="done-icon">🎉</div>
@@ -319,7 +293,6 @@
     <button class="btn btn-dark" onclick="startReview()">复习错题</button>
     <button class="btn btn-ghost" onclick="endSession()">结束本次</button>
   </div>
- 
   <div class="study-card" id="panReview" style="display:none;">
     <div class="sc-top">
       <div class="sc-info-row"><span id="reviewInfo"></span><span>错词复习</span></div>
@@ -339,7 +312,6 @@
       </div>
     </div>
   </div>
- 
   <div class="card" id="panDone" style="display:none;">
     <div class="done-wrap">
       <div class="done-icon">🏆</div>
@@ -395,29 +367,24 @@
     <div class="stat-row"><span>导入词库</span><span class="stat-val" id="libImp">0 词</span></div>
     <div class="stat-row"><span>错题数量</span><span class="stat-val" id="libWrong">0 词</span></div>
   </div>
- 
   <div class="card">
     <div class="card-title">内置词库</div>
-    <button class="btn btn-dark" onclick="loadBuiltIn()">激活内置词库</button>
+    <button class="btn btn-dark" onclick="loadBuiltIn()">激活内置考研词库（30词）</button>
   </div>
- 
   <div class="card">
     <div class="card-title">粘贴导入个人词库</div>
-    <p style="font-size:12px;color:#8a9088;margin-bottom:10px;">每行一个词，格式：<b>单词|释义</b>，例：abandon|放弃；抛弃</p>
-    <textarea id="pasteInput" placeholder="在此粘贴词汇，每行格式：&#10;abandon|放弃；抛弃&#10;achieve|达到；实现" style="height:130px;"></textarea>
+    <p style="font-size:12px;color:#8a9088;margin-bottom:10px;">每行一个词，格式：<b>单词|释义</b></p>
+    <textarea id="pasteInput" placeholder="abandon|放弃；抛弃&#10;achieve|达到；实现" style="height:130px;"></textarea>
     <div style="display:flex;gap:8px;margin-top:10px;">
       <button class="btn btn-outline" style="flex:1;margin:0;" onclick="handlePasteImport()">导入</button>
       <button class="btn btn-ghost" style="flex:0 0 72px;margin:0;" onclick="clearImported()">清空词库</button>
     </div>
     <div id="pasteMsg" style="font-size:12px;color:#8a9088;margin-top:8px;min-height:16px;"></div>
   </div>
- 
-  <!-- 新增：单词等级表 -->
   <div class="card">
-    <div class="card-title">单词等级表 <input type="text" id="levelSearch" placeholder="搜索单词" style="width:130px;margin-left:12px;font-size:13px;padding:6px 10px;" oninput="renderLevelTable()"></div>
+    <div class="card-title">单词等级表 <input type="text" id="levelSearch" placeholder="搜索单词" class="search-input" oninput="renderLevelTable()"></div>
     <div id="levelTable" style="max-height:45vh;overflow-y:auto;font-size:13px;"></div>
   </div>
- 
   <div class="card">
     <div class="card-title">学习统计</div>
     <div class="stat-row"><span>最长连续打卡</span><span class="stat-val" id="maxStreak">0 天</span></div>
@@ -449,9 +416,8 @@ let wrongs = JSON.parse(localStorage.getItem(STORAGE.wrongs) || '[]');
 let checkins = JSON.parse(localStorage.getItem(STORAGE.cis) || '[]');
 let learnHist = JSON.parse(localStorage.getItem(STORAGE.lhist) || '{}');
 let recentEns = JSON.parse(localStorage.getItem(STORAGE.recent) || '[]');
-let reviewSchedule = JSON.parse(localStorage.getItem(STORAGE.schedule) || '{}'); // { en: { nextDate, interval, lastReview } }
+let reviewSchedule = JSON.parse(localStorage.getItem(STORAGE.schedule) || '{}');
 let apiToken = localStorage.getItem(STORAGE.token) || '';
- 
 function saveAll() {
   localStorage.setItem(STORAGE.bi, JSON.stringify(builtIn));
   localStorage.setItem(STORAGE.imp, JSON.stringify(imported));
@@ -533,23 +499,19 @@ async function mmFetch(path, method='GET', body=null) {
   if(!res.ok) throw new Error(`API错误 ${res.status}`);
   return res.json();
 }
-// 查询单词释义(取第一条)
 async function getWordInfo(word) {
   try {
     const data = await mmFetch(`/word/${encodeURIComponent(word)}`);
     return data;
   } catch(e) { return null; }
 }
-// 获取云词本列表
 async function getBooks() {
   return await mmFetch('/book');
 }
-// 添加单词到指定云词本
 async function addToBook(bookId, words) {
   return await mmFetch(`/book/${bookId}/word`, 'POST', { words });
 }
  
-// ────────────── 例句展示 ──────────────
 async function showExample(word, containerId) {
   const el = document.getElementById(containerId);
   if(!el) return;
@@ -632,14 +594,40 @@ function refreshLib(){
   s('totalLearned', totL+' 词');
 }
  
-// ────────────── 内置词库激活 ──────────────
-const BUILTIN = `abandon|放弃；抛弃\nability|能力；才能\nachievement|成就；成绩\nact|行动；法令\nadd|增加；补充\n...`; // 省略大量词条以缩短，实际保留你文件中的完整词库
-function loadBuiltIn(){
-  let n=0;
-  BUILTIN.split('\n').forEach(line=>{
-    const i=line.indexOf('|'); if(i<1) return;
-    const en=line.slice(0,i).trim(), ch=line.slice(i+1).trim();
-    if(en && ch && !builtIn.some(w=>w.en===en)){ builtIn.push({en,ch}); n++; }
-  });
-  saveAll(); refreshLib(); refreshDash();
-  alert(`激活完成！词库共 ${builtI
+// ────────────── 内置词库（30个考研高频词） ──────────────
+const BUILTIN = `abandon|放弃；抛弃
+ability|能力；才能
+abroad|在国外；到国外
+absence|缺席；缺乏
+absolute|绝对的；完全的
+absorb|吸收；吸引
+abstract|抽象的；摘要
+abundant|丰富的；充裕的
+abuse|滥用；虐待
+academy|学院；学会
+accelerate|加速；促进
+access|进入；通道
+accommodate|容纳；提供住宿
+accompany|陪伴；伴随
+accomplish|完成；实现
+account|账户；解释
+accumulate|积累；积聚
+accurate|精确的；准确的
+accuse|指责；指控
+achieve|达到；实现
+acknowledge|承认；感谢
+acquire|获得；习得
+adapt|适应；改编
+adequate|足够的；适当的
+adjust|调整；适应
+administration|管理；行政
+admire|钦佩；赞赏
+admit|承认；准许进入
+adopt|采用；收养
+advance|前进；进步`.trim();
+ 
+function loadBuiltIn() {
+  let n = 0;
+  BUILTIN.split('\n').forEach(line => {
+    const i = line.indexOf('|'); if (i < 1) return;
+    const en = line.slice(0, i).tr
