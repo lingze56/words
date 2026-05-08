@@ -615,15 +615,15 @@ const HARDCODED_KEYS = {
   deepseek:  'sk-3e8f8fdaf46d4ffc97daefa165cb47e2',  // DeepSeek API Key
   maimemo:   '5a82369773f4b96682aba0f19b524b3b310b30d7f5157cff751753abc9179ae1',  // 墨墨背单词 Token
 };
-// 墨墨 API 请求封装 —— 本地 server 走代理，远程走直连
+// 墨墨 API 请求封装 —— 本地走同源代理，远程走 CORS 代理
 function maimemoFetch(path, options = {}) {
-  // 判断是否由本地 server.js 提供（同源访问），走本地代理
-  if (location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.hostname.startsWith('10.') || location.hostname.startsWith('192.168.')) {
-    const apiPath = '/api/maimemo' + path;
-    return fetch(apiPath, options);
+  const isLocal = location.hostname==='127.0.0.1'||location.hostname==='localhost'||location.hostname.startsWith('10.')||location.hostname.startsWith('192.168.');
+  if (isLocal) {
+    return fetch('/api/maimemo' + path, options);
   }
-  // 否则直连（GitHub Pages 走 HTTPS 可能仍被 CORS 拦截，推荐用本地 server）
-  return fetch('https://open.maimemo.com/open' + path, options);
+  // 远程（GitHub Pages）：通过 corsproxy.io 代理，解决跨域
+  const url = 'https://open.maimemo.com/open' + path;
+  return fetch('https://corsproxy.io/?' + url, options);
 }
 // ============================================
 
