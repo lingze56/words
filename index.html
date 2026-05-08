@@ -612,7 +612,7 @@
 //    改完保存，本地 server 打开即可生效，无需反复填
 // ============================================
 const HARDCODED_KEYS = {
-  deepseek:  '',  // DeepSeek API Key → https://platform.deepseek.com
+  deepseek:  'sk-3e8f8fdaf46d4ffc97daefa165cb47e2',  // DeepSeek API Key
   maimemo:   '5a82369773f4b96682aba0f19b524b3b310b30d7f5157cff751753abc9179ae1',  // 墨墨背单词 Token
 };
 // ============================================
@@ -1409,12 +1409,9 @@ async function syncWrongsToMaimemo() {
   if(isFileProtocol()){ toast('⚠ file:// 协议禁止 API 请求，请通过 http://localhost 打开'); return; }
   if(wrongs.length===0){ toast('错题本为空'); return; }
   try{
-    const res=await fetch('https://open.maimemo.com/api/v1/book',{headers:{'Authorization':`Bearer ${t}`}});
-    if(!res.ok) throw new Error('Token无效');
-    const books=await res.json();
-    if(!books.length) throw new Error('未找到词本');
     const body=JSON.stringify({words:wrongs.map(w=>w.en)});
-    await fetch(`https://open.maimemo.com/api/v1/book/${books[0].id}/word`,{method:'POST',headers:{'Authorization':`Bearer ${t}`,'Content-Type':'application/json'},body});
+    const res=await fetch('https://open.maimemo.com/open/api/v1/study/add_words',{method:'POST',headers:{'Authorization':`Bearer ${t}`,'Content-Type':'application/json'},body});
+    if(!res.ok) throw new Error('同步失败');
     toast(`已同步 ${wrongs.length} 个错词`);
   } catch(e){ toast('同步失败: '+e.message); }
 }
@@ -1427,13 +1424,15 @@ async function fetchMaimemoBooks() {
   el.style.display='block';
   el.innerHTML='<div style="font-size:12px;color:var(--sub);padding:8px 0;">加载词本列表...</div>';
   try{
-    const res=await fetch('https://open.maimemo.com/api/v1/book',{headers:{'Authorization':`Bearer ${t}`}});
+    const res=await fetch('https://open.maimemo.com/open/api/v1/notepads?limit=20',{headers:{'Authorization':`Bearer ${t}`}});
     if(!res.ok) throw new Error('Token 无效');
-    const books=await res.json();
+    const json=await res.json();
+    if(!json.success) throw new Error(json.errors?.[0]?.msg||'请求失败');
+    const books=json.data.notepads||[];
     if(!books.length){ el.innerHTML='<div style="font-size:12px;color:var(--sub);">未找到词本，请先在墨墨创建词本</div>'; return; }
-    el.innerHTML=books.map(b=>`<div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0ec;">
-      <div><div style="font-size:13px;font-weight:500;">${b.name||'未命名'}</div><div style="font-size:10px;color:var(--sub);">${b.word_count||0} 词</div></div>
-      <button class="btn btn-sm btn-outline" onclick="importFromMaimemoBook('${b.id}','${(b.name||'未命名').replace(/'/g,"\\'")}')">导入</button>
+    el.innerHTML=books.filter(b=>b.type!=='FAVORITE').map(b=>`<div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0ec;">
+      <div><div style="font-size:13px;font-weight:500;">${b.title||'未命名'}</div><div style="font-size:10px;color:var(--sub);">${b.brief||''}</div></div>
+      <button class="btn btn-sm btn-outline" onclick="importFromMaimemoBook('${b.id}','${(b.title||'未命名').replace(/'/g,"\\'")}')">导入</button>
     </div>`).join('');
   } catch(e){ el.innerHTML=`<div style="font-size:12px;color:var(--danger);">加载失败：${e.message}</div>`; }
 }
@@ -1443,23 +1442,16 @@ async function importFromMaimemoBook(bookId, bookName) {
   const el=document.getElementById('mmBookList');
   el.innerHTML=`<div style="font-size:12px;color:var(--sub);padding:8px 0;">正在从「${bookName}」导入...</div>`;
   try{
-    let allWords=[], page=1, hasMore=true;
-    while(hasMore){
-      const res=await fetch(`https://open.maimemo.com/api/v1/book/${bookId}/word?page=${page}&per_page=200`,{headers:{'Authorization':`Bearer ${t}`}});
-      if(!res.ok) break;
-      const data=await res.json();
-      if(data&&data.length){ allWords=allWords.concat(data); page++; }
-      else hasMore=false;
-    }
-    const words=allWords.map(w=>{
-      const ch=w.definition||w.translation||w.cn||(w.definitions&&w.definitions[0])||'';
-      return {en:w.word||w.en||'',ch:ch};
-    }).filter(w=>w.en&&w.ch);
+    const res=await fetch(`https://open.maimemo.com/open/api/v1/notepads/${encodeURIComponent(bookId)}`,{headers:{'Authorization':`Bearer ${t}`}});
+    if(!res.ok) throw new Error('请求失败');
+    const json=await res.json();
+    if(!json.success) throw new Error(json.errors?.[0]?.msg||'');
+    const words=(json.data.notepad.list||[]).filter(e=>e.type==='WORD'&&e.word).map(e=>({en:e.word,ch:e.chinese||''}));
     if(words.length===0){ toast('该词本无可导入词汇'); el.style.display='none'; return; }
     let n=0;
     words.forEach(w=>{ if(!imported.find(x=>x.en===w.en)){ imported.push(w); n++; } });
     saveAll(); refreshHome(); refreshLib(); renderLevelTable();
-    el.innerHTML=`<div style="font-size:12px;color:var(--pri);padding:8px 0;">✓ 从「${bookName}」导入 ${n} 个新词（共 ${words.length} 词）</div>`;
+    el.innerHTML=`<div style="font-size:12px;color:var(--pri);padding:8px 0;">从「${bookName}」导入 ${n} 个新词（共 ${words.length} 词）</div>`;
     toast(`导入 ${n} 个新词`);
   } catch(e){ el.innerHTML=`<div style="font-size:12px;color:var(--danger);">导入失败：${e.message}</div>`; }
 }
@@ -1470,11 +1462,12 @@ async function showExample(word, cid) {
   if(!t){ el.innerHTML='<span style="color:var(--danger);">需配置Token</span>'; return; }
   el.innerHTML='查询中...';
   try{
-    const res=await fetch(`https://open.maimemo.com/api/v1/word/${encodeURIComponent(word)}`,{headers:{'Authorization':`Bearer ${t}`}});
-    const info=await res.json();
-    if(info&&info.sentences&&info.sentences.length){
-      const s=info.sentences[0];
-      el.innerHTML=`<small>📖 ${s.sentence||s.en||''}</small><br><small style="color:var(--sub);">${s.translation||s.cn||''}</small>`;
+    const res=await fetch(`https://open.maimemo.com/open/api/v1/vocabulary?spelling=${encodeURIComponent(word)}`,{headers:{'Authorization':`Bearer ${t}`}});
+    const json=await res.json();
+    if(json.success&&json.data&&json.data.voc){
+      const v=json.data.voc;
+      const def=v.definition||v.translation||'';
+      el.innerHTML=`<small>释义：${def||'无'}</small>`;
     } else { el.innerHTML='<span style="color:var(--sub);">暂无例句</span>'; }
   } catch(e){ el.innerHTML=`<span style="color:var(--danger);">失败</span>`; }
 }
