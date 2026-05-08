@@ -1404,7 +1404,7 @@ function startTodayReview() {
 // 墨墨同步
 // ============================================
 async function syncWrongsToMaimemo() {
-  const t=localStorage.getItem('apiToken')||'';
+  const t=localStorage.getItem('apiToken')||HARDCODED_KEYS.maimemo||'';
   if(!t){ toast('请先在设置中配置Token'); return; }
   if(isFileProtocol()){ toast('⚠ file:// 协议禁止 API 请求，请通过 http://localhost 打开'); return; }
   if(wrongs.length===0){ toast('错题本为空'); return; }
@@ -1417,7 +1417,7 @@ async function syncWrongsToMaimemo() {
 }
 
 async function fetchMaimemoBooks() {
-  const t=localStorage.getItem('apiToken')||'';
+  const t=localStorage.getItem('apiToken')||HARDCODED_KEYS.maimemo||'';
   if(!t){ toast('请先填写墨墨 Token'); return; }
   if(isFileProtocol()){ toast('⚠ file:// 协议禁止 API 请求，请通过 http://localhost 打开'); return; }
   const el=document.getElementById('mmBookList');
@@ -1438,7 +1438,7 @@ async function fetchMaimemoBooks() {
 }
 
 async function importFromMaimemoBook(bookId, bookName) {
-  const t=localStorage.getItem('apiToken')||'';
+  const t=localStorage.getItem('apiToken')||HARDCODED_KEYS.maimemo||'';
   const el=document.getElementById('mmBookList');
   el.innerHTML=`<div style="font-size:12px;color:var(--sub);padding:8px 0;">正在从「${bookName}」导入...</div>`;
   try{
@@ -1458,7 +1458,7 @@ async function importFromMaimemoBook(bookId, bookName) {
 
 async function showExample(word, cid) {
   const el=document.getElementById(cid); if(!el) return;
-  const t=localStorage.getItem('apiToken')||'';
+  const t=localStorage.getItem('apiToken')||HARDCODED_KEYS.maimemo||'';
   if(!t){ el.innerHTML='<span style="color:var(--danger);">需配置Token</span>'; return; }
   el.innerHTML='查询中...';
   try{
