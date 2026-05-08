@@ -615,6 +615,16 @@ const HARDCODED_KEYS = {
   deepseek:  'sk-3e8f8fdaf46d4ffc97daefa165cb47e2',  // DeepSeek API Key
   maimemo:   '5a82369773f4b96682aba0f19b524b3b310b30d7f5157cff751753abc9179ae1',  // 墨墨背单词 Token
 };
+// 墨墨 API 请求封装 —— 本地 server 走代理，远程走直连
+function maimemoFetch(path, options = {}) {
+  // 判断是否由本地 server.js 提供（同源访问），走本地代理
+  if (location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.hostname.startsWith('10.') || location.hostname.startsWith('192.168.')) {
+    const apiPath = '/api/maimemo' + path;
+    return fetch(apiPath, options);
+  }
+  // 否则直连（GitHub Pages 走 HTTPS 可能仍被 CORS 拦截，推荐用本地 server）
+  return fetch('https://open.maimemo.com/open' + path, options);
+}
 // ============================================
 
 // ============================================
@@ -1029,7 +1039,11 @@ async function runAIAnalysis() {
   try{
     const data=collectFullData();
     const prompt=buildPrompt(data);
-    const res=await fetch(endpoint+'/chat/completions',{
+    // 本地 server 走代理避免跨域
+    const fetchUrl = (location.hostname==='127.0.0.1'||location.hostname==='localhost'||location.hostname.startsWith('10.')||location.hostname.startsWith('192.168.'))
+      ? '/api/deepseek/v1/chat/completions'
+      : endpoint+'/chat/completions';
+    const res=await fetch(fetchUrl,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
       body:JSON.stringify({model,messages:[
@@ -1410,7 +1424,7 @@ async function syncWrongsToMaimemo() {
   if(wrongs.length===0){ toast('错题本为空'); return; }
   try{
     const body=JSON.stringify({words:wrongs.map(w=>w.en)});
-    const res=await fetch('https://open.maimemo.com/open/api/v1/study/add_words',{method:'POST',headers:{'Authorization':`Bearer ${t}`,'Content-Type':'application/json'},body});
+    const res=await maimemoFetch('/api/v1/study/add_words',{method:'POST',headers:{'Authorization':`Bearer ${t}`,'Content-Type':'application/json'},body});
     if(!res.ok) throw new Error('同步失败');
     toast(`已同步 ${wrongs.length} 个错词`);
   } catch(e){ toast('同步失败: '+e.message); }
@@ -1424,7 +1438,7 @@ async function fetchMaimemoBooks() {
   el.style.display='block';
   el.innerHTML='<div style="font-size:12px;color:var(--sub);padding:8px 0;">加载词本列表...</div>';
   try{
-    const res=await fetch('https://open.maimemo.com/open/api/v1/notepads?limit=20',{headers:{'Authorization':`Bearer ${t}`}});
+    const res=await maimemoFetch('/api/v1/notepads?limit=20',{headers:{'Authorization':`Bearer ${t}`}});
     if(!res.ok) throw new Error('Token 无效');
     const json=await res.json();
     if(!json.success) throw new Error(json.errors?.[0]?.msg||'请求失败');
@@ -1442,16 +1456,17 @@ async function importFromMaimemoBook(bookId, bookName) {
   const el=document.getElementById('mmBookList');
   el.innerHTML=`<div style="font-size:12px;color:var(--sub);padding:8px 0;">正在从「${bookName}」导入...</div>`;
   try{
-    const res=await fetch(`https://open.maimemo.com/open/api/v1/notepads/${encodeURIComponent(bookId)}`,{headers:{'Authorization':`Bearer ${t}`}});
+    const res=await maimemoFetch(`/api/v1/notepads/${encodeURIComponent(bookId)}`,{headers:{'Authorization':`Bearer ${t}`}});
     if(!res.ok) throw new Error('请求失败');
     const json=await res.json();
     if(!json.success) throw new Error(json.errors?.[0]?.msg||'');
     const words=(json.data.notepad.list||[]).filter(e=>e.type==='WORD'&&e.word).map(e=>({en:e.word,ch:e.chinese||''}));
     if(words.length===0){ toast('该词本无可导入词汇'); el.style.display='none'; return; }
-    let n=0;
-    words.forEach(w=>{ if(!imported.find(x=>x.en===w.en)){ imported.push(w); n++; } });
+    let n=0, noCh=0;
+    words.forEach(w=>{ if(!imported.find(x=>x.en===w.en)){ imported.push(w); n++; if(!w.ch) noCh++; } });
     saveAll(); refreshHome(); refreshLib(); renderLevelTable();
-    el.innerHTML=`<div style="font-size:12px;color:var(--pri);padding:8px 0;">从「${bookName}」导入 ${n} 个新词（共 ${words.length} 词）</div>`;
+    const msg = noCh>0 ? `（其中 ${noCh} 个暂无释义，可在词库中点击单词查询墨墨释义）` : '';
+    el.innerHTML=`<div style="font-size:12px;color:var(--pri);padding:8px 0;">从「${bookName}」导入 ${n} 个新词（共 ${words.length} 词）${msg}</div>`;
     toast(`导入 ${n} 个新词`);
   } catch(e){ el.innerHTML=`<div style="font-size:12px;color:var(--danger);">导入失败：${e.message}</div>`; }
 }
@@ -1462,7 +1477,7 @@ async function showExample(word, cid) {
   if(!t){ el.innerHTML='<span style="color:var(--danger);">需配置Token</span>'; return; }
   el.innerHTML='查询中...';
   try{
-    const res=await fetch(`https://open.maimemo.com/open/api/v1/vocabulary?spelling=${encodeURIComponent(word)}`,{headers:{'Authorization':`Bearer ${t}`}});
+    const res=await maimemoFetch(`/api/v1/vocabulary?spelling=${encodeURIComponent(word)}`,{headers:{'Authorization':`Bearer ${t}`}});
     const json=await res.json();
     if(json.success&&json.data&&json.data.voc){
       const v=json.data.voc;
